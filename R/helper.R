@@ -13,6 +13,7 @@
 #' @examples
 #' setup_log_dir(list(log_dir='output_directory',cache_Old=F))
 #'
+#' @importFrom utils capture.output
 #' @export
 setup_log_dir <- function(opt) {
   folds <- list.dirs(path=opt$log_dir)[!grepl(pattern='past_runs',list.dirs(path=opt$log_dir)) &
@@ -69,6 +70,7 @@ make_epoch_dir <- function(log_dir, epoch, wts) {
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
 #' @keywords iupac biostrings tfbstools
 #'
+#' @importFrom Biostrings IUPAC_CODE_MAP
 #' @export
 IUPAC2Matrix <- function(x){
   x <- as.character(x)

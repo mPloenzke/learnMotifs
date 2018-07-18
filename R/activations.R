@@ -9,6 +9,8 @@
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
 #' @keywords activation filter difference
 #'
+#' @importFrom magrittr %>%
+#' @importFrom dplyr group_by summarise mutate filter ungroup distinct left_join select
 #' @export
 calcActivationDifference <- function(data) {
   meanactivations <- data %>%
@@ -39,6 +41,7 @@ calcActivationDifference <- function(data) {
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
 #' @keywords activations filter
 #'
+#' @importFrom keras k_function
 #' @export
 get_activations <- function(model,input_layer=NULL,output_layer,data) {
   if (is.null(input_layer)) {input_tensor <- model$input} else {input_tensor <- model$input[[input_layer]]}
@@ -69,6 +72,10 @@ get_activations <- function(model,input_layer=NULL,output_layer,data) {
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
 #' @keywords activations filter format
 #'
+#' @importFrom tibble as.tibble
+#' @importFrom dplyr bind_rows left_join mutate
+#' @importFrom tidyr gather
+#' @importFrom magrittr %>%
 #' @export
 format_activations <- function(model,data,y,input_layer=1,output_layer,buffer=0,motif.names) {
   flat1 <- as.tibble(get_activations(model,input_layer,output_layer,data[y==1,,,,drop=F]))

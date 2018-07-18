@@ -55,6 +55,7 @@ nonnegative_constraint <- function(w) {
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
 #' @keywords combo constraint
 #'
+#' @importFrom keras k_cast k_greater_equal k_float k_expand_dims k_concatenate
 #' @export
 combo_constraint <- function(w) {
   w <- w * k_cast(k_greater_equal(w, 0), k_floatx()) # force nonnegative

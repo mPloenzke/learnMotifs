@@ -14,6 +14,7 @@
 #' @seealso \code{\link{find_max_length}}
 #' @keywords offset bias
 #'
+#' @importFrom keras keras_model_sequential layer_conv_2d layer_max_pooling_2d layer_flatten compile
 #' @export
 calculate_offsets <- function(icm.motifs, motif.pos, motif.maxlen, onehot_array, batchsize=256) {
   if (is.null(motif.pos)) {motif.pos <- 1:dim(icm.motifs)[4]}

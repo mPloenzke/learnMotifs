@@ -35,6 +35,7 @@ format_filter_motifs <- function(conv_filters) {
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
 #' @keywords motif filter format
 #'
+#' @importFrom stats quantile
 #' @export
 format_activation_motifs <- function(activations, test_seqs, filter_len, method, threshold) {
   all_dna_strings <- list()
