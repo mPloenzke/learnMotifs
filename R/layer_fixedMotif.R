@@ -1,0 +1,39 @@
+#' Custom 2-D convolution wrapper with fixed ICMs
+#'
+#' Custom 2-D convolution wrapper for fixed motifs, such as those coming from a database.
+#'
+#' @param object Keras model object.
+#' @param filters Number of convolutional filters.
+#' @param motif_maxlen Maximum length of the motifs.
+#' @param fixed.motifs List of motifs to be used as filters.
+#' @param fixed.offsets Vector of offset values.
+#'
+#' @return A Keras model with the added layer.
+#'
+#' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
+#' @keywords conv convolution layer fixedMotif
+#'
+#' @export
+layer_fixedMotif <- function (object,
+                          filters,
+                          motif_maxlen,
+                          fixed.motifs,
+                          fixed.offsets,
+                          input_shape = NULL,
+                          strides = c(1L, 1L),
+                          padding = "valid",
+                          activation = 'sigmoid',
+                          use_bias = TRUE,
+                          name = 'fixedMotif_conv', trainable = FALSE) {
+  keras::create_layer(keras:::keras$layers$Conv2D, object, list(filters = as.integer(filters),
+                                                 kernel_size = keras:::as_integer_tuple(c(4,motif_maxlen)), strides = keras:::as_integer_tuple(strides),
+                                                 padding = padding, data_format = NULL, dilation_rate = c(1L, 1L),
+                                                 activation = activation, use_bias = use_bias, kernel_initializer = keras::initializer_constant(fixed.motifs),
+                                                 bias_initializer = keras::initializer_constant(-fixed.offsets), kernel_regularizer = NULL,
+                                                 bias_regularizer = NULL, activity_regularizer = NULL,
+                                                 kernel_constraint = NULL, bias_constraint = NULL,
+                                                 input_shape = keras:::normalize_shape(input_shape), batch_input_shape = keras:::normalize_shape(NULL),
+                                                 batch_size = keras:::as_nullable_integer(NULL), dtype = NULL,
+                                                 name = name, trainable = trainable, weights = NULL))
+}
+

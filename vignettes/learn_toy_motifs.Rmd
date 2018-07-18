@@ -1,0 +1,161 @@
+---
+title: "Learn motifs"
+author: "Matt Ploenzke"
+date: "7/6/2018"
+output: html_document
+---
+  
+```{r setup, include=FALSE}
+rm(list=ls(all=TRUE))
+knitr::opts_chunk$set(echo = TRUE)
+library(keras)
+library(learnMotifs)
+library(tidyverse)
+library(ggrepel)
+library(ggseqlogo)
+library(stringi)
+library(abind)
+```
+
+Set model options.
+```{r}
+rm(list=ls(all=TRUE))
+opt <- list()
+opt$max_len <- 200
+opt$log_dir <- 'log'
+opt$embedding_pos <- 'GGGGGGGG'
+opt$embedding_neg <- 'CCCCCCCC'
+opt$batch_size <- 64
+opt$epochs <- 10
+opt$n_filters <- 4
+opt$filter_len <- 12
+opt$lambda_pos <- 1.5e-3
+opt$lambda_filter <- 1e-12
+opt$lambda_l1 <- 3e-3
+opt$lambda_offset <- 0
+opt$lambda_Z_offset <- 2.5e-3
+opt$lambda_beta <- 2.5e-3
+opt$learning_rate <- 0.02
+opt$decay_rate <- opt$learning_rate / opt$epochs / 2
+opt$plot_Activations <- TRUE
+opt$plot_filterMotifs <- TRUE
+opt$plot_empiricalMotifs <- FALSE
+opt$run_Tomtom <- FALSE
+opt$output_plots_every <- 5
+opt$downsample <- 1
+opt$shuffle <- .1
+opt$cache_Old <- TRUE
+```
+
+Load random nucleotide sequences files.
+```{r}
+negative.cases <- EmptyBackground
+```
+
+Join and randomly shuffle to increase difficulty.
+```{r}
+idx <- as.logical(rbinom(nrow(negative.cases),size=1,.5))
+positive.cases <- negative.cases[idx,]
+negative.cases <- negative.cases[!idx,]
+negative.cases$y <- 0
+positive.cases$y <- 1
+for (irow in 1:nrow(positive.cases)) {
+  if (runif(1)<(1-opt$shuffle)) {
+    location <- sample(1:(opt$max_len-nchar(opt$embedding_pos)),1)
+    substr(positive.cases[irow,'sequence'],start=location,stop=(location+nchar(opt$embedding_pos)-1)) <- opt$embedding_pos
+    positive.cases[irow,'embeddings'] <- opt$embedding_pos
+  }
+}
+for (irow in 1:nrow(negative.cases)) {
+  if (runif(1)<(1-opt$shuffle)) {
+    location <- sample(1:(opt$max_len-nchar(opt$embedding_neg)),1)
+    substr(negative.cases[irow,'sequence'],start=location,stop=(location+nchar(opt$embedding_neg)-1)) <- opt$embedding_neg
+    negative.cases[irow,'embeddings'] <- opt$embedding_neg
+  }
+}
+all.cases <- rbind(positive.cases,negative.cases)
+all.cases <- all.cases[sample(1:nrow(all.cases),size=nrow(all.cases),replace=FALSE),]
+```
+
+Optionally downsample.
+```{r}
+if (opt$downsample<1) {all.cases <- all.cases[sample(1:nrow(all.cases),size=opt$downsample*nrow(all.cases)),]}
+```
+
+Split into training and validation.
+```{r}
+idx <- sample(1:nrow(all.cases),round(.9*nrow(all.cases)))
+training_data <- all.cases[idx,c('sequence')]
+training_labels <- all.cases[idx,'y']
+validation_data <- all.cases[-idx,c('sequence')]
+validation_labels <- all.cases[-idx,'y']
+```
+
+Set up logging directory and save validation set.
+```{r}
+setup_log_dir(opt)
+write.table(cbind(validation_data,validation_labels),file=file.path(opt$log_dir,'testset.csv'),sep=',',row.names=F,col.names=F)
+```
+
+One-hot encode for the de novo model.
+```{r}
+training_array <- one_hot(training_data,opt$filter_len)
+validation_array <- one_hot(validation_data,opt$filter_len)
+validation_array_s <- one_hot(xs,opt$filter_len)
+validation_array_0 <- one_hot(x0,opt$filter_len)
+```
+
+Build the de novo model.
+```{r}
+deNovo_sequence <- layer_input(shape=c(4,opt$max_len + 2*opt$filter_len-2,1),name='deNovo_input')
+deNovo_model <- deNovo_sequence %>%
+  layer_deNovo(filter=opt$n_filters,
+               filter_len=opt$filter_len,
+               lambda_pos=opt$lambda_pos,
+               lambda_filter=opt$lambda_filter,
+               lambda_l1=opt$lambda_l1,
+               lambda_offset=opt$lambda_offset,
+               lambda_Z_offset=opt$lambda_Z_offset,
+               input_shape = c(4, opt$max_len+2*opt$filter_len-2, 1)) %>%
+  layer_max_pooling_2d(pool_size = c(1,(opt$max_len+opt$filter_len-1)),name='deNovo_pool') %>%
+  layer_flatten(name='deNovo_flatten') %>%
+  layer_dense(units=1,activation='sigmoid',
+                  kernel_regularizer = regularizer_l1(l=opt$lambda_beta))
+model <- keras_model(
+      inputs = deNovo_sequence, 
+      outputs = deNovo_model)
+model %>% compile(
+  loss = "binary_crossentropy",
+  optimizer = optimizer_adam(lr=opt$learning_rate,decay=opt$decay_rate),
+  metrics = c("accuracy")
+)
+```
+
+Learn motifs.
+```{r}
+deNovo_callback <- deNovo_Motifs$new(model,opt$output_plots_every,opt$log_dir,
+                                     plot_activations=opt$plot_Activations, 
+                                     plot_filters=opt$plot_filterMotifs,
+                                     plot_crosscorrel_motifs=opt$plot_empiricalMotifs,
+                                     run_tomtom=opt$run_Tomtom,
+                                     deNovo_data=validation_array, 
+                                     test_labels=validation_labels, test_seqs=validation_data,
+                                     num_deNovo=opt$n_filters, filter_len=opt$filter_len)
+sequence_fit <- model %>% fit(
+  x=training_array, training_labels,
+  batch_size = opt$batch_size,
+  epochs = opt$epochs,
+  validation_data = list(validation_array, validation_labels),
+  shuffle = TRUE,
+  callbacks = list(deNovo_callback)
+)
+```
+
+Save training plot.
+```{r}
+p <- plot(sequence_fit,method='ggplot2',smooth=TRUE)
+ggsave(paste(opt$log_dir,"Training_loss_.pdf",sep="/"),plot=p,width=15,height=7.5,units='in')
+model$save(file.path(opt$log_dir,'deNovo_model.h5'))
+model$save_weights(file.path(opt$log_dir,'deNovo_model_weights.h5'))
+write.table(model$to_yaml(),file.path(opt$log_dir,'deNovo_model.yaml'))
+```

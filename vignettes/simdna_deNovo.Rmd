@@ -1,0 +1,219 @@
+---
+title: "de novo motifs"
+author: "Matt Ploenzke"
+date: "7/9/2018"
+output: html_document
+---
+  
+```{r setup, include=FALSE}
+rm(list=ls(all=TRUE))
+knitr::opts_chunk$set(echo = TRUE)
+library(keras)
+library(learnMotifs)
+library(tidyverse)
+library(ggrepel)
+library(ggseqlogo)
+library(stringi)
+library(abind)
+```
+
+Set model options.
+```{r}
+rm(list=ls(all=TRUE))
+opt <- list()
+opt$input <- 'data'
+opt$max_len <- 200
+opt$log_dir <- 'log_deNovo'
+opt$batch_size <- 64
+opt$epochs <- 20
+opt$n_filters <- 8
+opt$filter_len <- 16
+opt$lambda_pos <- 5e-4
+opt$lambda_filter <- 1e-7
+opt$lambda_l1 <- 1e-6
+opt$lambda_offset <- 3e-5
+opt$lambda_Z_offset <- 0
+opt$lambda_beta <- 2.5e-3
+opt$learning_rate <- 0.02
+opt$decay_rate <- opt$learning_rate / opt$epochs / 2
+opt$plot_Activations <- FALSE
+opt$plot_filterMotifs <- TRUE
+opt$plot_empiricalMotifs <- FALSE
+opt$run_Tomtom <- FALSE
+opt$JASPAR <- file.path(opt$log_dir,'JASPAR_reference_motifs.txt')
+opt$JASPAR_pfms <- file.path(opt$log_dir,'JASPAR_known_motifs.txt')
+opt$motif_qval_threshold <- .1
+opt$output_plots_every <- 5
+opt$downsample <- .2
+opt$shuffle <- .1
+opt$cache_Old <- TRUE
+opt$seed <- 12345
+set.seed <- opt$seed
+```
+
+Load random nucleotide sequences files.
+```{r}
+positive.cases <- MYC_CTCF_IRF
+negative.cases <- EmptyBackground
+```
+
+Join and randomly shuffle to increase difficulty.
+```{r}
+motifs <- c('IRF','MYC','CTCF')
+y1 <- cbind(as.numeric(grepl(motifs[1],positive.cases$embeddings)),
+           as.numeric(grepl(motifs[2],positive.cases$embeddings)),
+           as.numeric(grepl(motifs[3],positive.cases$embeddings)))
+y1 <- abs(y1 - matrix(rbinom(3*nrow(positive.cases),1,prob=opt$shuffle),ncol=3,nrow=nrow(positive.cases)))
+colnames(y1) <- motifs
+positive.cases <- cbind(positive.cases,y1)
+y0 <- matrix(0,ncol=3,nrow=nrow(negative.cases))
+y0 <- abs(y0 - matrix(rbinom(3*nrow(negative.cases),1,prob=opt$shuffle),ncol=3,nrow=nrow(negative.cases)))
+colnames(y0) <- motifs
+negative.cases <- cbind(negative.cases,y0)
+#positive.cases$y <- rbinom(nrow(positive.cases),1,prob=(1-opt$shuffle))
+#negative.cases$y <- rbinom(nrow(negative.cases),1,prob=opt$shuffle)
+all.cases <- rbind(positive.cases,negative.cases)
+all.cases <- all.cases[sample(1:nrow(all.cases),size=nrow(all.cases),replace=FALSE),]
+```
+
+Optionally downsample.
+```{r}
+if (opt$downsample<1) {all.cases <- all.cases[sample(1:nrow(all.cases),size=opt$downsample*nrow(all.cases)),]}
+```
+
+Split into training and validation.
+```{r}
+idx <- sample(1:nrow(all.cases),round(.9*nrow(all.cases)))
+training_data <- all.cases[idx,c('sequence')]
+training_labels <- all.cases[idx,motifs]
+validation_data <- all.cases[-idx,c('sequence')]
+validation_labels <- all.cases[-idx,motifs]
+```
+
+Set up logging directory and save validation set.
+```{r}
+setup_log_dir(opt)
+write.table(cbind(validation_data,validation_labels),file=file.path(opt$log_dir,'testset.csv'),sep=',',row.names=F,col.names=F)
+```
+
+One-hot encode for the de novo model.
+```{r}
+training_array <- one_hot(training_data,opt$filter_len)
+validation_array <- one_hot(validation_data,opt$filter_len)
+```
+
+Build the de novo model.
+```{r}
+deNovo_sequence <- layer_input(shape=c(4,opt$max_len + 2*opt$filter_len-2,1),name='deNovo_input')
+deNovo_model <- deNovo_sequence %>%
+  layer_deNovo(filter=opt$n_filters,
+               filter_len=opt$filter_len,
+               lambda_pos=opt$lambda_pos,
+               lambda_filter=opt$lambda_filter,
+               lambda_l1=opt$lambda_l1,
+               lambda_offset=opt$lambda_offset,
+               lambda_Z_offset=opt$lambda_Z_offset,
+               input_shape = c(4, opt$max_len+2*opt$filter_len-2, 1)) %>%
+  layer_max_pooling_2d(pool_size = c(1,(opt$max_len+opt$filter_len-1)),name='deNovo_pool') %>%
+  layer_flatten(name='deNovo_flatten') %>%
+  layer_dense(units=3,activation='sigmoid',
+                  kernel_regularizer = regularizer_l1(l=opt$lambda_beta))
+model <- keras_model(
+      inputs = deNovo_sequence, 
+      outputs = deNovo_model)
+model %>% compile(
+  loss = 'binary_crossentropy',
+  optimizer = optimizer_adam(lr=opt$learning_rate,decay=opt$decay_rate),
+  metrics = c("accuracy")
+)
+```
+
+Learn motifs.
+```{r}
+deNovo_callback <- deNovo_Motifs$new(model,opt$output_plots_every,opt$log_dir,
+                                     plot_activations=opt$plot_Activations, 
+                                     plot_filters=opt$plot_filterMotifs,
+                                     plot_crosscorrel_motifs=opt$plot_empiricalMotifs,
+                                     run_tomtom=opt$run_Tomtom,
+                                     deNovo_data=validation_array, 
+                                     test_labels=validation_labels, test_seqs=validation_data,
+                                     num_deNovo=opt$n_filters, filter_len=opt$filter_len)
+sequence_fit <- model %>% fit(
+  x=training_array, as.matrix(training_labels),
+  batch_size = opt$batch_size,
+  epochs = opt$epochs,
+  validation_data = list(validation_array, as.matrix(validation_labels)),
+  shuffle = TRUE,
+  callbacks = list(deNovo_callback)
+)
+```
+
+Save training plot.
+```{r}
+p <- plot(sequence_fit,method='ggplot2',smooth=TRUE)
+ggsave(paste(opt$log_dir,"Training_loss_.pdf",sep="/"),plot=p,width=15,height=7.5,units='in')
+model$save(file.path(opt$log_dir,'deNovo_model.h5'))
+model$save_weights(file.path(opt$log_dir,'deNovo_model_weights.h5'))
+write.table(model$to_yaml(),file.path(opt$log_dir,'deNovo_model.yaml'))
+```
+
+Output individual filters CSVs.
+```{r}
+filters <- model$get_weights()[[1]]
+for (i in 1:dim(filters)[4]) {
+  write.table(filters[,,,i],paste(opt$log_dir,paste("ICM_filter_",i,".csv",sep=""),sep="/"),sep = ",",row.names=T,col.names=F)
+}
+```
+
+Run Tomtom.
+```{r}
+W_conv_list <- lapply(1:dim(filters)[4], function(ii) {
+    i <- filters[,,,ii]
+    ppm <- i/matrix(colSums(i),nrow=4,ncol=ncol(i),byrow=T)
+    row.names(ppm) <- c("A","C","G","T")
+    ppm <- ppm[,!is.nan(colSums(ppm)),drop=F]
+    if (ncol(ppm)<1) {return(NULL)}
+    return(ppm)
+})
+names(W_conv_list) <- paste('Motif',1:opt$n_filters,sep='_')
+invisible(lapply(seq_along(W_conv_list),function(i) {
+  if (!is.null(W_conv_list[[i]])) {
+    write(gsub(' ','_',names(W_conv_list)[i]),file=paste(opt$log_dir,"PPM_filters.txt",sep="/"),append=TRUE)
+    row.names(W_conv_list[[i]]) <- paste(row.names(W_conv_list[[i]]),':',sep='')
+    write.table(W_conv_list[[i]],file=paste(opt$log_dir,"PPM_filters.txt",sep="/"),
+                append=TRUE,row.names=T,col.names=F,sep='\t',quote=F)
+    write('\n',file=paste(opt$log_dir,"PPM_filters.txt",sep="/"),append=T)
+  }
+}))
+system(paste('uniprobe2meme ',paste(epoch_dir,"PPM_filters.txt",sep="/"),' > ',paste(epoch_dir,'PPM_meme_format.txt',sep='/'),sep=''))
+fl <- 'PPM_meme_format.txt'
+system(paste('tomtom -oc ',paste(epoch_dir,'/tomtom_out ',sep=''),'-thresh ',opt$motif_qval_threshold,' ',paste(epoch_dir,fl,sep='/'),opt$JASPAR,sep=''))
+```
+
+Output activation sequences.
+```{r}
+flat_fn <- k_function(inputs = list(model$input),
+                      outputs = list(model$get_layer(name='deNovo_flatten')$output))
+flat <- flat_fn(list(validation_array))[[1]]
+flat <- as.tibble(flat)
+flat_tibble <- cbind(flat,validation_labels)
+colnames(flat_tibble)[1:opt$n_filters] <- 1:opt$n_filters
+flat_tibble$IRF <- as.factor(flat_tibble$IRF)
+flat_tibble$MYC <- as.factor(flat_tibble$MYC)
+flat_tibble$CTCF <- as.factor(flat_tibble$CTCF)
+flat_tibble <- gather(flat_tibble,Filter,Activation,1:opt$n_filters)
+flat_tibble$Filter <- factor(flat_tibble$Filter)
+W_fc1 <- model$get_weights()[[3]]
+W_fc1 <- as.tibble(W_fc1)
+colnames(W_fc1) <- paste('W_fc1',motifs,sep='_')
+b_conv1 <- as.tibble(model$get_weights()[[2]])
+names(b_conv1) <- 'b_conv1'
+W_fc1$Filter <- as.factor(1:opt$n_filters)
+b_conv1$Filter <- as.factor(1:opt$n_filters)
+flat_tibble <- flat_tibble %>% 
+  left_join(W_fc1,by='Filter') %>%
+  left_join(b_conv1,by='Filter')
+write.table(flat_tibble,paste(opt$log_dir,"Filter_activation_sequences.csv",sep="/"),sep = ",",row.names=F,col.names=T)
+```
+
+

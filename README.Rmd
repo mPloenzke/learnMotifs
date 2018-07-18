@@ -1,0 +1,36 @@
+---
+output: 
+  md_document:
+    variant: markdown_github
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-"
+)
+```
+
+# learnMotif
+
+learnMotif implements the weight constrained and regularized convolution filter layers for learning sequence motifs as informationc content matrices (ICMs) directly.
+
+## Installation
+
+You can install learnMotif from github with:
+
+```{r gh-installation, eval = FALSE}
+# install.packages("devtools")
+devtools::install_github("mPloenzke/")
+```
+
+If you encounter a bug, please file a minimal reproducible example on [github](https://github.com/mPloenzke/learnMotif/issues). 
+
+## Learning learnMotif
+
+To get started, please read the intro vignette: `vignette("Introduction", package = "learnMotif")`. 
+
+

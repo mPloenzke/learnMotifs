@@ -1,0 +1,383 @@
+---
+title: "JASPAR motifs"
+author: "Matt Ploenzke"
+date: "7/17/2018"
+output: html_document
+---
+  
+```{r setup, include=FALSE}
+rm(list=ls(all=TRUE))
+knitr::opts_chunk$set(echo = TRUE)
+library(keras)
+library(learnMotifs)
+library(tidyverse)
+library(ggrepel)
+library(ggseqlogo)
+library(stringi)
+library(abind)
+```
+
+Set model options.
+```{r}
+rm(list=ls(all=TRUE))
+opt <- list()
+opt$input <- '~/Desktop/Vikes/data/MYC_CTCF_IRF2/'
+opt$use_gold_standard <- TRUE
+opt$remove_motif <- FALSE
+opt$motif_to_remove <- 'None'#'CTCF'
+opt$trainable <- FALSE
+opt$max_len <- 200
+opt$log_dir <- 'log_JASPAR_fixed'
+opt$batch_size <- 64
+opt$epochs <- 10
+opt$lambda_offset <- 3e-5
+opt$lambda_beta <- 6e-2
+opt$extranneous_jaspar_motifs <- 'ALL'
+opt$learning_rate <- 0.05
+opt$decay_rate <- opt$learning_rate / opt$epochs / 2
+opt$plot_Activations <- TRUE
+opt$plot_filterMotifs <- TRUE
+opt$plot_empiricalMotifs <- FALSE
+opt$run_Tomtom <- FALSE
+opt$JASPAR <- file.path(opt$log_dir,'JASPAR_reference_motifs.txt')
+opt$JASPAR_pfms <- file.path(opt$log_dir,'JASPAR_known_motifs.txt')
+opt$motif_qval_threshold <- .1
+opt$output_plots_every <- 5
+opt$downsample <- .1
+opt$shuffle <- .1
+opt$cache_Old <- TRUE
+opt$seed <- 12345
+set.seed <- opt$seed
+```
+
+Load random nucleotide sequences files.
+```{r}
+positive.files <- file.path(opt$input,list.files(opt$input,pattern='.simdata')[grepl("DensityEmbedding",list.files(opt$input,pattern='.simdata'))])
+negative.files <- file.path(opt$input,list.files(opt$input,pattern='.simdata')[grepl("EmptyBackground",list.files(opt$input,pattern='.simdata'))])
+positive.cases <- data.frame()
+for (fi in positive.files) {positive.cases <- rbind(positive.cases,read.table(fi,header = TRUE, sep="\t",stringsAsFactors=FALSE, quote=""))}
+positive.cases$y <- rbinom(nrow(positive.cases),1,prob=(1-opt$shuffle))
+negative.cases <- data.frame()
+for (fi in negative.files) {negative.cases <- rbind(negative.cases,read.table(fi,header = TRUE, sep="\t",stringsAsFactors=FALSE, quote=""))}
+negative.cases$y <- rbinom(nrow(negative.cases),1,prob=opt$shuffle)
+all.cases <- rbind(positive.cases,negative.cases)
+all.cases <- all.cases[sample(1:nrow(all.cases),size=nrow(all.cases),replace=FALSE),]
+```
+
+Optionally downsample.
+```{r}
+if (opt$downsample<1) {all.cases <- all.cases[sample(1:nrow(all.cases),size=opt$downsample*nrow(all.cases)),]}
+```
+
+Split into training and validation.
+```{r}
+idx <- sample(1:nrow(all.cases),round(.9*nrow(all.cases)))
+training_data <- all.cases[idx,c('sequence')]
+training_labels <- all.cases[idx,'y']
+validation_data <- all.cases[-idx,c('sequence')]
+validation_labels <- all.cases[-idx,'y']
+xs <- validation_data[validation_labels==1]
+ys <- validation_labels[validation_labels==1]
+x0 <- validation_data[validation_labels==0]
+y0 <- validation_labels[validation_labels==0]
+```
+
+Set up logging directory and save validation set.
+```{r}
+setup_log_dir(opt)
+write.table(cbind(validation_data,validation_labels),file=file.path(opt$log_dir,'testset.csv'),sep=',',row.names=F,col.names=F)
+```
+
+Import previously-annotated motifs. We'll use JASPAR. 
+```{r}
+inserted.motifs <- c('MYC','CTCF','IRF')
+if (opt$remove_motif) {inserted.motifs <- inserted.motifs[inserted.motifs!=opt$motif_to_remove]}
+download.file('http://jaspar.genereg.net/download/CORE/JASPAR2018_CORE_vertebrates_non-redundant_pfms_jaspar.txt',opt$JASPAR_pfms)
+jaspar.raw <- my_readJASPARMatrix(opt$JASPAR_pfms,type='all')
+jaspar.names <- names(jaspar.raw)
+if (opt$extranneous_jaspar_motifs=='ALL') {
+  jaspar.pos <- 1:length(jaspar.raw)
+} else {
+  jaspar.pos <- sapply(inserted.motifs,function(j) {which(jaspar.names==j)})
+  jaspar.pos <- c(jaspar.pos,sample((1:length(jaspar.raw))[!(1:length(jaspar.raw) %in% jaspar.pos)],opt$extranneous_jaspar_motifs,replace=FALSE))
+}
+jaspar.pos <- jaspar.pos[!is.na(jaspar.pos)]
+jaspar.names <- jaspar.names[jaspar.pos]
+jaspar.maxlen <- find_max_length(jaspar.raw,jaspar.pos)
+if (opt$use_gold_standard) {
+  CTCF <- t(matrix(data=c(0.094860, 0.321626, 0.082910, 0.500603,	
+    0.180384, 0.159806, 0.452884, 0.206926,	
+    0.307522, 0.053535, 0.492753, 0.146190,	
+    0.060966, 0.876931, 0.022892, 0.039211,	
+    0.009077, 0.988080, 0.000229, 0.002613,	
+    0.813552, 0.014523, 0.071719, 0.100206,	
+    0.043699, 0.575644, 0.368218, 0.012439,	
+    0.118939, 0.474669, 0.052846, 0.353546,	
+    0.930645, 0.012588, 0.036258, 0.020508,	
+    0.005755, 0.000339, 0.990255, 0.003651,	
+    0.364917, 0.003691, 0.620889, 0.010503,	
+    0.059011, 0.013147, 0.553799, 0.374044,	
+    0.013705, 0.000259, 0.977377, 0.008658,	
+    0.062093, 0.008987, 0.850907, 0.078013,	
+    0.113393, 0.806330, 0.005626, 0.074651,	
+    0.407499, 0.013905, 0.559165, 0.019431,	
+    0.090242, 0.531934, 0.338154, 0.039670,	
+    0.128974, 0.352967, 0.081065, 0.436994,	
+    0.443957, 0.197720, 0.294176, 0.064148),ncol=4,byrow=T))*1e6
+  IRF <- t(matrix(data=c(0.000259, 0.379347, 0.574480, 0.045914, 
+    0.999253, 0.000289, 0.000199, 0.000259,  
+    0.999243, 0.000229, 0.000319, 0.000209,  
+    0.951087, 0.000229, 0.000229, 0.048455,  
+    0.999233, 0.000239, 0.000299, 0.000229,  
+    0.056207, 0.223850, 0.665441, 0.054503,  
+    0.000249, 0.476116, 0.000299, 0.523336,  
+    0.050497, 0.000199, 0.948985, 0.000319,  
+    0.999273, 0.000279, 0.000199, 0.000249,  
+    0.952651, 0.046910, 0.000189, 0.000249,  
+    0.999372, 0.000199, 0.000159, 0.000269,  
+    0.048694, 0.667384, 0.283643, 0.000279,  
+    0.048903, 0.618102, 0.047697, 0.285297),ncol=4,byrow=T))*1e6
+  MYC <- t(matrix(data=c(0.248323, 0.309590, 0.132856, 0.309231,  
+    0.279335, 0.071102, 0.468415, 0.181148,  
+    0.698921, 0.031500, 0.209907, 0.059672,  
+    0.099592, 0.688328, 0.191223, 0.020857,  
+    0.000299, 0.999213, 0.000309, 0.000179,  
+    0.999342, 0.000239, 0.000239, 0.000179,  
+    0.000209, 0.999263, 0.000339, 0.000189,  
+    0.000189, 0.000329, 0.999193, 0.000289,  
+    0.000269, 0.000309, 0.000229, 0.999193,  
+    0.000219, 0.000309, 0.999023, 0.000448,  
+    0.020339, 0.188741, 0.692593, 0.098327,  
+    0.060937, 0.209658, 0.029208, 0.700196,  
+    0.179872, 0.471624, 0.069796, 0.278707,  
+    0.310576, 0.130594, 0.308463, 0.250366),ncol=4,byrow=T))*1e6
+  row.names(CTCF) <- row.names(MYC) <- row.names(IRF) <- c('A','C','G','T')
+  if (!opt$remove_motif & opt$motif_to_remove!='CTCF') {jaspar.raw[[which(jaspar.names=='CTCF')]] <- CTCF}
+  if (!opt$remove_motif & opt$motif_to_remove!='IRF') {jaspar.raw[[which(jaspar.names=='IRF2')]] <- IRF}
+  if (!opt$remove_motif & opt$motif_to_remove!='MYC') {jaspar.raw[[which(jaspar.names=='MYC')]] <- MYC}
+}
+jaspar.motifs <- pfm_to_icm(jaspar.raw,jaspar.pos,jaspar.maxlen)
+```
+
+Format the data for the annotated motifs.
+```{r}
+training_array_jaspar <- one_hot(training_data,jaspar.maxlen)
+validation_array_jaspar <- one_hot(validation_data,jaspar.maxlen)
+validation_array_s_jaspar <- one_hot(xs,jaspar.maxlen)
+validation_array_0_jaspar <- one_hot(x0,jaspar.maxlen)
+```
+
+Calculate the expected activations to use as offsets.
+```{r}
+jaspar.offsets <- calculate_offsets(jaspar.motifs, jaspar.pos, jaspar.maxlen, training_array_jaspar, batchsize=256)
+```
+
+Build the JASPAR model to calculate the motif effect (beta).
+```{r}
+jaspar_sequence <- layer_input(shape=c(4,opt$max_len + 2*jaspar.maxlen-2,1),name='jaspar_input')
+Z_model <- jaspar_sequence %>%
+  layer_fixedMotif(filter=length(jaspar.pos),
+                   motif_maxlen=jaspar.maxlen,
+                   fixed.motifs=jaspar.motifs,
+                   fixed.offsets=jaspar.offsets,
+                   input_shape = c(4, opt$max_len+2*jaspar.maxlen-2, 1),
+                   name = 'jaspar_conv')  %>%
+  layer_max_pooling_2d(pool_size = c(1,(opt$max_len+jaspar.maxlen-1)),name='jaspar_pool') %>%
+  layer_flatten(name='jaspar_flatten') %>%
+  layer_dense(units=1,activation='sigmoid',kernel_constraint = nonnegative_constraint,kernel_regularizer = regularizer_l1(l=opt$lambda_beta)) 
+Z_prelim_model <- keras_model(
+      inputs = c(jaspar_sequence), 
+      outputs = c(Z_model))
+Z_prelim_model %>% compile(
+  loss = "binary_crossentropy",
+  optimizer = optimizer_sgd(lr=opt$learning_rate,decay=opt$decay_rate),
+  metrics = c("accuracy")
+)
+Z_fit <- Z_prelim_model %>% fit(
+  x=training_array_jaspar, training_labels,
+  batch_size = opt$batch_size,
+  epochs = opt$epochs,
+  validation_data = list(validation_array_jaspar, validation_labels),
+  shuffle = TRUE
+)
+Z_prelim_preds <- predict(Z_prelim_model,validation_array_jaspar)
+```
+
+Save training plot.
+```{r}
+p <- plot(Z_fit,method='ggplot2',smooth=TRUE)
+ggsave(paste(opt$log_dir,"Training_loss_Jaspar_Preliminary.pdf",sep="/"),plot=p,width=15,height=7.5,units='in')
+Z_prelim_model$save(file.path(opt$log_dir,'Jaspar_Prelminary.h5'))
+Z_prelim_model$save_weights(file.path(opt$log_dir,'Jaspar_Prelminary_weights.h5'))
+write.table(Z_prelim_model$to_yaml(),file.path(opt$log_dir,'Jaspar_Prelminary.yaml'))
+```
+
+Remove the irrelevant JASPAR motifs based on effect size. 
+```{r}
+betas <- tibble(Effect=c(Z_prelim_model$get_weights()[[3]]),Filter=jaspar.names)
+inserted.motifs <- pull(betas[which(abs(betas$Effect)>.01),'Filter'])
+```
+
+Plot and write them to csv them for inspection along with the activation difference for visualization.
+```{r}
+betas$Information <- apply(jaspar.motifs,4,sum)
+input_tensor <- Z_prelim_model$input
+activations_fn <- k_function(inputs = list(input_tensor),
+                             outputs = list(Z_prelim_model$get_layer(name='jaspar_flatten')$output))
+activations <- activations_fn(list(validation_array_jaspar))[[1]]
+colnames(activations) <- jaspar.names
+activations <- as.tibble(activations)
+activations$Y <- validation_labels
+activations <- activations %>% gather(Filter,Activation,-Y) %>% left_join(betas,by='Filter')
+betas <- calcActivationDifference(activations)
+plot_a1 <- plot_activation_difference(betas)
+ggsave(paste(opt$log_dir,"Betas_Jaspar_Preliminary.pdf",sep="/"),plot=plot_a1,width=15,height=7.5,units='in')
+write.table(betas,file=file.path(opt$log_dir,'Betas_Jaspar_Preliminary.csv'),sep=',',row.names=F,col.names=T)
+```
+
+Output individual filters CSVs.
+```{r}
+filters <- Z_prelim_model$get_weights()[[1]]
+for (i in inserted.motifs) {
+  write.table(filters[,,,which(jaspar.names==i)],paste(opt$log_dir,paste("ICM_prelim_filter_",i,".csv",sep=""),sep="/"),sep = ",",row.names=T,col.names=F)
+}
+flat_fn <- k_function(inputs = list(Z_prelim_model$input),
+                    outputs = list(Z_prelim_model$get_layer(name='jaspar_flatten')$output))
+flat <- flat_fn(list(validation_array_jaspar))[[1]]
+flat_tibble <- as.tibble(cbind(flat,validation_labels))
+duplics <- table(jaspar.names)[table(jaspar.names)>1]
+for (ii in names(duplics)) {
+  jaspar.names[jaspar.names==ii] <- paste(ii,1:duplics[ii],sep='_')
+}
+colnames(flat_tibble)[1:length(jaspar.names)] <- jaspar.names
+flat_tibble$y <- as.factor(flat_tibble$validation_labels)
+flat_tibble <- flat_tibble %>% select(-validation_labels)
+flat_tibble <- gather(flat_tibble,Filter,Activation,1:length(jaspar.names))
+flat_tibble$Filter <- factor(flat_tibble$Filter)
+W_fc1 <- Z_prelim_model$get_weights()[[3]]
+W_fc1 <- as.tibble(W_fc1)
+names(W_fc1) <- 'W_fc1'
+b_conv1 <- as.tibble(Z_prelim_model$get_weights()[[2]])
+names(b_conv1) <- 'b_conv1'
+W_fc1$Filter <- as.factor(jaspar.names)
+b_conv1$Filter <- as.factor(jaspar.names)
+flat_tibble <- flat_tibble %>% 
+  left_join(W_fc1,by='Filter') %>%
+  left_join(b_conv1,by='Filter')
+write.table(flat_tibble,paste(opt$log_dir,"Preliminary_Filter_activation_sequences.csv",sep="/"),sep = ",",row.names=F,col.names=T)
+```
+
+Reformat the JASPAR data and re-calculate offsets.
+```{r}
+jaspar.names <- names(jaspar.raw)
+jaspar.pos <- sapply(inserted.motifs,function(j) {grep(paste('^',j,'$',sep=''),jaspar.names,ignore.case=T)})
+jaspar.names <- jaspar.names[jaspar.pos]
+jaspar.maxlen <- find_max_length(jaspar.raw,jaspar.pos)
+jaspar.motifs <- pfm_to_icm(jaspar.raw,jaspar.pos,jaspar.maxlen)
+training_array_jaspar <- one_hot(training_data,jaspar.maxlen)
+validation_array_jaspar <- one_hot(validation_data,jaspar.maxlen)
+validation_array_s_jaspar <- one_hot(xs,jaspar.maxlen)
+validation_array_0_jaspar <- one_hot(x0,jaspar.maxlen)
+jaspar.offsets <- calculate_offsets(jaspar.motifs, jaspar.pos, jaspar.maxlen, training_array_jaspar, batchsize=256)
+```
+
+Calculate the effect size for these motifs. 
+```{r}
+jaspar_sequence <- layer_input(shape=c(4,opt$max_len + 2*jaspar.maxlen-2,1),name='jaspar_input')
+Z_model <- jaspar_sequence %>%
+  layer_fixedMotif(filter=length(jaspar.pos),
+                   motif_maxlen=jaspar.maxlen,
+                   fixed.motifs=jaspar.motifs,
+                   fixed.offsets=jaspar.offsets,
+                   input_shape = c(4, opt$max_len+2*jaspar.maxlen-2, 1),
+                   name = 'jaspar_conv',
+                   trainable = opt$trainable)  %>%
+  layer_max_pooling_2d(pool_size = c(1,(opt$max_len+jaspar.maxlen-1)),name='jaspar_pool') %>%
+  layer_flatten(name='jaspar_flatten') %>%
+  layer_dense(units=1,activation='sigmoid') 
+Z_second_model <- keras_model(
+      inputs = c(jaspar_sequence), 
+      outputs = c(Z_model))
+Z_second_model %>% compile(
+  loss = "binary_crossentropy",
+  optimizer = optimizer_sgd(lr=opt$learning_rate,decay=opt$decay_rate),
+  metrics = c("accuracy")
+)
+Z_fit <- Z_second_model %>% fit(
+  x=training_array_jaspar, training_labels,
+  batch_size = opt$batch_size,
+  epochs = opt$epochs,
+  validation_data = list(validation_array_jaspar, validation_labels),
+  shuffle = TRUE
+)
+```
+
+Save training plot.
+```{r}
+p <- plot(Z_fit,method='ggplot2',smooth=TRUE)
+ggsave(paste(opt$log_dir,"Training_loss_Jaspar_Secondary.pdf",sep="/"),plot=p,width=15,height=7.5,units='in')
+Z_second_model$save(file.path(opt$log_dir,'Jaspar_Secondary.h5'))
+Z_second_model$save_weights(file.path(opt$log_dir,'Jaspar_Secondary_weights.h5'))
+write.table(Z_second_model$to_yaml(),file.path(opt$log_dir,'Jaspar_Secondary.yaml'))
+Z_second_preds <- predict(Z_second_model,validation_array_jaspar)
+```
+
+Output activation sequences.
+```{r}
+flat_fn <- k_function(inputs = list(Z_second_model$input),
+                      outputs = list(Z_second_model$get_layer(name='jaspar_flatten')$output))
+flat <- flat_fn(list(validation_array_jaspar))[[1]]
+flat_tibble <- as.tibble(cbind(flat,validation_labels))
+duplics <- table(jaspar.names)[table(jaspar.names)>1]
+for (ii in names(duplics)) {
+  jaspar.names[jaspar.names==ii] <- paste(ii,1:duplics[ii],sep='_')
+}
+colnames(flat_tibble)[1:length(jaspar.names)] <- jaspar.names
+flat_tibble$y <- as.factor(flat_tibble$validation_labels)
+flat_tibble <- flat_tibble %>% select(-validation_labels)
+flat_tibble <- gather(flat_tibble,Filter,Activation,1:length(jaspar.names))
+flat_tibble$Filter <- factor(flat_tibble$Filter)
+W_fc1 <- Z_second_model$get_weights()[[3]]
+W_fc1 <- as.tibble(W_fc1)
+names(W_fc1) <- 'W_fc1'
+b_conv1 <- as.tibble(Z_second_model$get_weights()[[2]])
+names(b_conv1) <- 'b_conv1'
+W_fc1$Filter <- as.factor(jaspar.names)
+b_conv1$Filter <- as.factor(jaspar.names)
+flat_tibble <- flat_tibble %>% 
+  left_join(W_fc1,by='Filter') %>%
+  left_join(b_conv1,by='Filter')
+write.table(flat_tibble,paste(opt$log_dir,"Filter_activation_sequences.csv",sep="/"),sep = ",",row.names=F,col.names=T)
+```
+
+Output individual filters CSVs.
+```{r}
+filters <- Z_second_model$get_weights()[[1]]
+for (i in 1:dim(filters)[4]) {
+  write.table(filters[,,,i],paste(opt$log_dir,paste("ICM_filter_",jaspar.names[i],".csv",sep=""),sep="/"),sep = ",",row.names=T,col.names=F)
+}
+```
+
+Plot and write them to csv them for inspection along with the activation difference for visualization.
+```{r}
+betas <- tibble(Effect=c(Z_second_model$get_weights()[[3]]),Filter=jaspar.names)
+inserted.motifs <- pull(betas[which(abs(betas$Effect)>.01),'Filter'])
+betas$Information <- apply(jaspar.motifs,4,sum)
+input_tensor <- Z_second_model$input
+activations_fn <- k_function(inputs = list(input_tensor),
+                             outputs = list(Z_second_model$get_layer(name='jaspar_flatten')$output))
+activations <- activations_fn(list(validation_array_jaspar))[[1]]
+colnames(activations) <- jaspar.names
+activations <- as.tibble(activations)
+activations$Y <- validation_labels
+activations <- activations %>% gather(Filter,Activation,-Y) %>% left_join(betas,by='Filter')
+betas <- calcActivationDifference(activations)
+plot_a1 <- plot_activation_difference(betas)
+ggsave(paste(opt$log_dir,"Betas_Jaspar_Final.pdf",sep="/"),plot=plot_a1,width=15,height=7.5,units='in')
+write.table(betas,file=file.path(opt$log_dir,'Betas_Jaspar_Final.csv'),sep=',',row.names=F,col.names=T)
+```
+
+```{r}
+
+```
+

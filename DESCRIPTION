@@ -1,0 +1,13 @@
+Package: learnMotifs
+Type: Package
+Title: Learn Nucleotide Motifs via Convolutions
+Version: 0.1.0
+Author: Matthew Ploenzke
+Maintainer: Matthew Ploenzke <ploenzke@g.harvard.edu>
+Description: Learn defining nucleotide sequence motifs by constrained convolutional filters. Filters represent information-content of motifs and may be initialized and fixed with database motif annotations. De novo motifs also measured with information-content and learned through weight constraints and regularization.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.0.1.9000
+Imports: keras
+Depends: R (>= 2.10)
