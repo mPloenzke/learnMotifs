@@ -4,6 +4,7 @@
 #'
 #' @param betas Tibble containing effect size information, filter name, mean activation difference, and information.
 #' @param combo Whether both de novo and annotated motifs are included.
+#' @param fl Filename to save plots to. If not provided, a plot object will be returned.
 #'
 #' @return A ggplot object.
 #'
@@ -18,6 +19,8 @@
 #' mat <- tibble(Difference=a,Effect=b,Filter=c,Information=d)
 #' plot_activation_difference(mat)
 #'
+#' @importFrom ggplot2 ggplot geom_point geom_hline geom_vline scale_size theme ylab xlab ggsave
+#' @importFrom ggrepel geom_text_repel
 #' @export
 plot_activation_difference <- function(betas,combo=F,fl=NULL) {
   if (!combo) {
@@ -54,6 +57,7 @@ plot_activation_difference <- function(betas,combo=F,fl=NULL) {
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
 #' @keywords plot activations filter
 #'
+#' @importFrom ggplot2 ggplot geom_point geom_boxplot geom_hline theme labs ylab guides ggsave
 #' @export
 plot_filter_activations_byClass <- function(data,show_beta=F,show_offset=F,fl=NULL) {
   if (show_beta | show_offset) {
@@ -106,6 +110,8 @@ plot_filter_activations_byClass <- function(data,show_beta=F,show_offset=F,fl=NU
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
 #' @keywords plot motif filter
 #'
+#' @importFrom ggplot2 ggplot geom_hline facet_wrap ylim labs theme ggsave
+#' @importFrom ggseqlogo geom_logo theme_logo
 #' @export
 plot_motifs <- function(W_conv,ylow=0,yhigh=2,method='custom',plotheight,fl) {
   plotheight <- ifelse(opt$n_filters>8,15,7.5)

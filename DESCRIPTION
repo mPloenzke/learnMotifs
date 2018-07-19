@@ -16,5 +16,8 @@ Imports:
     Biostrings,
     dplyr,
     tibble,
-    tidyr
+    tidyr,
+    ggplot2,
+    ggrepel,
+    ggseqlogo
 Depends: R (>= 2.10)

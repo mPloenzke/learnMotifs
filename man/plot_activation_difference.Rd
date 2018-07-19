@@ -10,6 +10,8 @@ plot_activation_difference(betas, combo = F, fl = NULL)
 \item{betas}{Tibble containing effect size information, filter name, mean activation difference, and information.}
 
 \item{combo}{Whether both de novo and annotated motifs are included.}
+
+\item{fl}{Filename to save plots to. If not provided, a plot object will be returned.}
 }
 \value{
 A ggplot object.

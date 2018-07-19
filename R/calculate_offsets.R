@@ -20,7 +20,7 @@ calculate_offsets <- function(icm.motifs, motif.pos, motif.maxlen, onehot_array,
   if (is.null(motif.pos)) {motif.pos <- 1:dim(icm.motifs)[4]}
   model_offset <- keras_model_sequential()
   model_offset %>%
-    layer_conv_2d(filter = length(motif.pos),
+    layer_conv_2d(filters = length(motif.pos),
                   kernel_size = c(4,motif.maxlen),
                   kernel_initializer = initializer_constant(icm.motifs),
                   kernel_constraint = fixedMotif_constraint,
