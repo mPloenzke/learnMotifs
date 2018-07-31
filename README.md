@@ -12,7 +12,7 @@ You can install learnMotif from github with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("mPloenzke/")
+devtools::install_github("mPloenzke/learnMotifs")
 ```
 
 If you encounter a bug, please file a minimal reproducible example on [github](https://github.com/mPloenzke/learnMotif/issues).
@@ -20,4 +20,4 @@ If you encounter a bug, please file a minimal reproducible example on [github](h
 Learning learnMotif
 -------------------
 
-To get started, please read the intro vignette: `vignette("Introduction", package = "learnMotif")`.
+To get started, please read the intro vignette: `vignette("learn_toy_motifs", package = "learnMotif")`.
