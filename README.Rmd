@@ -1,7 +1,5 @@
 ---
-output: 
-  md_document:
-    variant: markdown_github
+output: github_document
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -10,13 +8,13 @@ output:
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.path = "README-"
+  fig.path = "man/figures/README-"
 )
 ```
 
 # learnMotif
 
-learnMotif implements the weight constrained and regularized convolution filter layers for learning sequence motifs as informationc content matrices (ICMs) directly.
+learnMotif implements the weight constrained and regularized convolution filter layers for learning sequence motifs as information content matrices (ICMs) directly.
 
 ## Installation
 
