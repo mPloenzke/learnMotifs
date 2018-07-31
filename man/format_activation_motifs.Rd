@@ -23,7 +23,7 @@ format_activation_motifs(activations, test_seqs, filter_len, method, threshold)
 List with named motifs.
 }
 \description{
-Find the sequeneces which maximally activate (maximially cross-correlated with) the filters and format to a list with named rows for plotting with \link{\code{plot_motifs}}.
+Find the sequeneces which maximally activate (maximially cross-correlated with) the filters and format to a list with named rows for plotting with \code{\link{plot_motifs}}.
 }
 \author{
 Matthew Ploenzke, \email{ploenzke@g.harvard.edu}

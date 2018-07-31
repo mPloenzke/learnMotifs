@@ -4,12 +4,14 @@
 \alias{one_hot_vector}
 \title{One-hot encoding of DNA nucleotide string}
 \usage{
-one_hot_vector(dnastr, zeros_len)
+one_hot_vector(dnastr, zeros_len, max_len)
 }
 \arguments{
 \item{dnastr}{Character string composed of nucleotides A, C, G, T.}
 
 \item{zeros_len}{Integer value denoting number of zeros to pad vector with. Commonly the convolutional filter length - 1.}
+
+\item{max_len}{Integer value denoting the maximum sequence length. Used in the padding calculation to account for shorter sequences.}
 }
 \value{
 Zero-padded vector of one-hot encodings. If the input is of length \eqn{L} and with padding of length Z the output is of length \eqn{4(L+2Z)}.
@@ -18,7 +20,7 @@ Zero-padded vector of one-hot encodings. If the input is of length \eqn{L} and w
 Inputs a string composed of nucleotides and outputs a zero-padded vector of encodings.
 }
 \examples{
-one_hot(paste(sample(c('A','C','G','T'),100,replace=T),collapse=''),10)
+one_hot(paste(sample(c('A','C','G','T'),100,replace=TRUE),collapse=''),10)
 
 }
 \seealso{

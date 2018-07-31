@@ -24,7 +24,7 @@ a <- runif(10,0,1)
 b <- rnorm(10)
 c <- paste(1:10)
 d <- rnorm(10,1)
-mat <- tibble(Difference=a,Effect=b,Filter=c,Information=d)
+mat <- dplyr::tibble(Difference=a,Effect=b,Filter=c,Information=d)
 plot_activation_difference(mat)
 
 }

@@ -12,9 +12,6 @@
 #' @seealso \code{\link{find_max_length}}
 #' @keywords pfm icm information content motif
 #'
-#' @examples
-#'
-#'
 #' @export
 pfm_to_icm <- function(motif.raw, motif.pos, mmax) {
   if (is.null(motif.pos)) {motif.pos <- 1:length(motif.raw)}
@@ -45,9 +42,6 @@ pfm_to_icm <- function(motif.raw, motif.pos, mmax) {
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
 #' @seealso \code{\link{pfm_to_icm}}
 #' @keywords pfm icm information content motif
-#'
-#' @examples
-#'
 #'
 #' @export
 find_max_length <- function(motif.raw, motif.pos) {

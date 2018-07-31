@@ -11,7 +11,7 @@
 #' @keywords log directory
 #'
 #' @examples
-#' setup_log_dir(list(log_dir='output_directory',cache_Old=F))
+#' setup_log_dir(list(log_dir='output_directory',cache_Old=FALSE))
 #'
 #' @importFrom utils capture.output
 #' @export

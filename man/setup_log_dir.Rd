@@ -16,7 +16,7 @@ NULL. Output directory will be initialized.
 Creates the initial output directory, optionally backing up any files which may be overwritten.
 }
 \examples{
-setup_log_dir(list(log_dir='output_directory',cache_Old=F))
+setup_log_dir(list(log_dir='output_directory',cache_Old=FALSE))
 
 }
 \seealso{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/regularizer_defintions.R
 \name{total_regularizer}
 \alias{total_regularizer}
-\title{Total regularization function wrapper.}
+\title{Total kernel regularization function wrapper.}
 \usage{
 total_regularizer(weight_matrix)
 }
@@ -16,7 +16,7 @@ Total regularization penalty.
 Sum of the filter regularization and the position regularization.
 }
 \seealso{
-\code{\link{filter_regularizer}} \code{\link{position_regularizer}} \code{\link{Z_regularizer}}
+\code{\link{filter_regularizer}} \code{\link{position_regularizer}}
 }
 \author{
 Matthew Ploenzke, \email{ploenzke@g.harvard.edu}

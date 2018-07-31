@@ -12,12 +12,12 @@
 #' @keywords one-hot
 #'
 #' @examples
-#' one_hot(rep(paste(sample(c('A','C','G','T'),100,replace=T),collapse=''),50),10)
+#' one_hot(rep(paste(sample(c('A','C','G','T'),100,replace=TRUE),collapse=''),50),10)
 #'
 #' @export
 one_hot <- function(data,zeros_len) {
   max_len <- max(nchar(data))
-  tensor <- aperm(array(c(sapply(data,one_hot_vector,zeros_len=zeros_len)),dim=c((max_len+2*zeros_len-2),4,length(data),1)),perm=c(3,2,1,4))
+  tensor <- aperm(array(c(sapply(data,one_hot_vector,zeros_len=zeros_len,max_len=max_len)),dim=c((max_len+2*zeros_len-2),4,length(data),1)),perm=c(3,2,1,4))
   return(tensor)
 }
 
@@ -27,6 +27,7 @@ one_hot <- function(data,zeros_len) {
 #'
 #' @param dnastr Character string composed of nucleotides A, C, G, T.
 #' @param zeros_len Integer value denoting number of zeros to pad vector with. Commonly the convolutional filter length - 1.
+#' @param max_len Integer value denoting the maximum sequence length. Used in the padding calculation to account for shorter sequences.
 #'
 #' @return Zero-padded vector of one-hot encodings. If the input is of length \eqn{L} and with padding of length Z the output is of length \eqn{4(L+2Z)}.
 #'
@@ -35,13 +36,13 @@ one_hot <- function(data,zeros_len) {
 #' @keywords one-hot
 #'
 #' @examples
-#' one_hot(paste(sample(c('A','C','G','T'),100,replace=T),collapse=''),10)
+#' one_hot(paste(sample(c('A','C','G','T'),100,replace=TRUE),collapse=''),10)
 #'
 #' @export
-one_hot_vector <- function(dnastr,zeros_len) {
+one_hot_vector <- function(dnastr,zeros_len, max_len) {
   a <- strsplit(as.character(dnastr),"")[[1]]
-  buffer.left <- rep(0, ceiling((opt$max_len+2*zeros_len-2-nchar(dnastr))/2))
-  buffer.right <- rep(0, floor((opt$max_len+2*zeros_len-2-nchar(dnastr))/2))
+  buffer.left <- rep(0, ceiling((max_len+2*zeros_len-2-nchar(dnastr))/2))
+  buffer.right <- rep(0, floor((max_len+2*zeros_len-2-nchar(dnastr))/2))
   oH <- c(buffer.left, as.numeric(a=="A"), buffer.right,
           buffer.left, as.numeric(a=="C"), buffer.right,
           buffer.left, as.numeric(a=="G"), buffer.right,

@@ -31,10 +31,10 @@ calcActivationDifference <- function(data) {
 #'
 #' Calculate first-layer convolutional filter activations.
 #'
-#' @param model A \link{\code{Keras}} model.
+#' @param model A \code{Keras} model.
 #' @param input_layer Integer value denoting the input data. If NULL, assumes a single input layer.
 #' @param output_layer Integer denoting output layer or string containing the layer name.
-#' @param data Data array returned from \link{\code{one_hot}} to obtain activations for.
+#' @param data Data array returned from \code{\link{one_hot}} to obtain activations for.
 #'
 #' @return Array of activations.
 #'
@@ -47,7 +47,7 @@ get_activations <- function(model,input_layer=NULL,output_layer,data) {
   if (is.null(input_layer)) {input_tensor <- model$input} else {input_tensor <- model$input[[input_layer]]}
   if (is.numeric(output_layer)) {
     activations_fn <- k_function(inputs = list(input_tensor),
-                                 outputs = list(z_model$get_layer(index=as.integer(output_layer))$output))
+                                 outputs = list(model$get_layer(index=as.integer(output_layer))$output))
   } else {
     activations_fn <- k_function(inputs = list(input_tensor),
                                  outputs = list(model$get_layer(name=output_layer)$output))
@@ -57,10 +57,10 @@ get_activations <- function(model,input_layer=NULL,output_layer,data) {
 }
 #' Format filter activations for plotting.
 #'
-#' Format the first-layer filter activations for plotting with \link{\code{plot_filter_activations_byClass}}.
+#' Format the first-layer filter activations for plotting with \code{\link{plot_filter_activations_byClass}}.
 #'
-#' @param model A \link{\code{Keras}} model.
-#' @param data Data array returned from \link{\code{one_hot}} to obtain activations for.
+#' @param model A \code{Keras} model.
+#' @param data Data array returned from \code{\link{one_hot}} to obtain activations for.
 #' @param y Vector of class labels.
 #' @param input_layer Integer value denoting the input data. If NULL, assumes a single input layer.
 #' @param output_layer Integer denoting output layer or string containing the layer name.
@@ -87,8 +87,8 @@ format_activations <- function(model,data,y,input_layer=1,output_layer,buffer=0,
   flat_tibble$Y <- as.factor(flat_tibble$Y)
   flat_tibble <- gather(flat_tibble,Filter,Activation,1:length(motif.names))
   flat_tibble$Filter <- factor(flat_tibble$Filter)
-  W_fc1 <- as.tibble(model$get_weights()[[5]])
-  b_conv1 <- as.tibble(model$get_weights()[[2*input_layer]])
+  W_fc1 <- as.tibble(model$get_weights()[[(length(model$get_weights())-1)]])
+  b_conv1 <- as.tibble(model$get_weights()[[ifelse(is.null(input_layer),2,2*input_layer)]])
   W_fc1 <- W_fc1[(buffer+1):(buffer+length(motif.names)),1]
   names(W_fc1) <- 'W_fc1'
   names(b_conv1) <- 'b_conv1'

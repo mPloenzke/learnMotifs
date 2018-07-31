@@ -31,6 +31,7 @@ processJASPARText <- function(text){
 #' Reads in JASPAR format motifs. Slight modification of the original function available in the TFBSTools package (\code{https://github.com/ge11232002/TFBSTools}).
 #'
 #' @param fn Filename containing JASPAR-formatted PFMs
+#' @param type Does the file contain \code{'individual'} PFMs or a list (\code{'all'})?
 #'
 #' @return List of PFM motifs.
 #'

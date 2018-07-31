@@ -1,8 +1,12 @@
 ---
 title: "de novo motifs"
 author: "Matt Ploenzke"
-date: "7/9/2018"
-output: html_document
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Put the title of your vignette here}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
   
 ```{r setup, include=FALSE}
@@ -32,14 +36,12 @@ opt$lambda_pos <- 5e-4
 opt$lambda_filter <- 1e-7
 opt$lambda_l1 <- 1e-6
 opt$lambda_offset <- 3e-5
-opt$lambda_Z_offset <- 0
 opt$lambda_beta <- 2.5e-3
 opt$learning_rate <- 0.02
 opt$decay_rate <- opt$learning_rate / opt$epochs / 2
 opt$plot_Activations <- FALSE
 opt$plot_filterMotifs <- TRUE
 opt$plot_empiricalMotifs <- FALSE
-opt$run_Tomtom <- FALSE
 opt$JASPAR <- file.path(opt$log_dir,'JASPAR_reference_motifs.txt')
 opt$JASPAR_pfms <- file.path(opt$log_dir,'JASPAR_known_motifs.txt')
 opt$motif_qval_threshold <- .1
@@ -112,7 +114,6 @@ deNovo_model <- deNovo_sequence %>%
                lambda_filter=opt$lambda_filter,
                lambda_l1=opt$lambda_l1,
                lambda_offset=opt$lambda_offset,
-               lambda_Z_offset=opt$lambda_Z_offset,
                input_shape = c(4, opt$max_len+2*opt$filter_len-2, 1)) %>%
   layer_max_pooling_2d(pool_size = c(1,(opt$max_len+opt$filter_len-1)),name='deNovo_pool') %>%
   layer_flatten(name='deNovo_flatten') %>%
@@ -134,7 +135,6 @@ deNovo_callback <- deNovo_Motifs$new(model,opt$output_plots_every,opt$log_dir,
                                      plot_activations=opt$plot_Activations, 
                                      plot_filters=opt$plot_filterMotifs,
                                      plot_crosscorrel_motifs=opt$plot_empiricalMotifs,
-                                     run_tomtom=opt$run_Tomtom,
                                      deNovo_data=validation_array, 
                                      test_labels=validation_labels, test_seqs=validation_data,
                                      num_deNovo=opt$n_filters, filter_len=opt$filter_len)
@@ -166,7 +166,7 @@ for (i in 1:dim(filters)[4]) {
 ```
 
 Run Tomtom.
-```{r}
+```{r, eval=F}
 W_conv_list <- lapply(1:dim(filters)[4], function(ii) {
     i <- filters[,,,ii]
     ppm <- i/matrix(colSums(i),nrow=4,ncol=ncol(i),byrow=T)
@@ -185,9 +185,9 @@ invisible(lapply(seq_along(W_conv_list),function(i) {
     write('\n',file=paste(opt$log_dir,"PPM_filters.txt",sep="/"),append=T)
   }
 }))
-system(paste('uniprobe2meme ',paste(epoch_dir,"PPM_filters.txt",sep="/"),' > ',paste(epoch_dir,'PPM_meme_format.txt',sep='/'),sep=''))
+system(paste('uniprobe2meme ',paste(opt$epochs,"PPM_filters.txt",sep="/"),' > ',paste(opt$epochs,'PPM_meme_format.txt',sep='/'),sep=''))
 fl <- 'PPM_meme_format.txt'
-system(paste('tomtom -oc ',paste(epoch_dir,'/tomtom_out ',sep=''),'-thresh ',opt$motif_qval_threshold,' ',paste(epoch_dir,fl,sep='/'),opt$JASPAR,sep=''))
+system(paste('tomtom -oc ',paste(opt$epochs,'/tomtom_out ',sep=''),'-thresh ',opt$motif_qval_threshold,' ',paste(epoch_dir,fl,sep='/'),opt$JASPAR,sep=''))
 ```
 
 Output activation sequences.

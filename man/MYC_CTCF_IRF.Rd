@@ -6,7 +6,7 @@
 \title{Nucleotide sequences sampled from known motifs.}
 \format{A data frame with 5000 rows and 3 variables:
 \describe{
-  \item{seqname}{Sequence identifier}
+  \item{seqName}{Sequence identifier}
   \item{sequence}{Nucleotide sequences}
   \item{embeddings}{Locations and descriptions of embedded motifs.}
 }}

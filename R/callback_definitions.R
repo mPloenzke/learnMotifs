@@ -16,7 +16,6 @@ combo_Motifs <- R6::R6Class("combo_Motifs",
     plot_activations = FALSE,
     plot_filters = FALSE,
     plot_crosscorrel_motifs = FALSE,
-    run_tomtom = FALSE,
     deNovo_data = NULL,
     jaspar_data = NULL,
     test_labels = NULL,
@@ -25,7 +24,7 @@ combo_Motifs <- R6::R6Class("combo_Motifs",
     motif.names = NULL,
     filter_len = NULL,
     initialize = function(model = NA, N = NA, log_dir,
-                          plot_activations, plot_filters, plot_crosscorrel_motifs,run_tomtom,
+                          plot_activations, plot_filters, plot_crosscorrel_motifs,
                           deNovo_data, jaspar_data, test_labels, test_seqs,
                           num_deNovo, motif.names, filter_len) {
       self$model <- model
@@ -35,7 +34,6 @@ combo_Motifs <- R6::R6Class("combo_Motifs",
       self$plot_activations <- plot_activations
       self$plot_filters <- plot_filters
       self$plot_crosscorrel_motifs <- plot_crosscorrel_motifs
-      self$run_tomtom <- run_tomtom
       self$deNovo_data <- deNovo_data
       self$jaspar_data <- jaspar_data
       self$test_labels <- test_labels
@@ -75,17 +73,11 @@ combo_Motifs <- R6::R6Class("combo_Motifs",
           jaspar_conv_list <- format_filter_motifs(jaspar_conv)
           plot_motifs(deNovo_conv_list,ylow=0,yhigh=2,method='custom',plotheight=NULL,fl=file.path(epoch_dir,"deNovo_filter.pdf"))
           plot_motifs(jaspar_conv_list,ylow=0,yhigh=2,method='custom',plotheight=NULL,fl=file.path(epoch_dir,"jaspar_filters.pdf"))
-          if (self$run_tomtom) {
-            run_tomtom(c(deNovo_conv_list,jaspar_conv_list),pfm=F)
-          }
         }
         if (self$plot_crosscorrel_motifs) {
           activations <- get_activations(model,input_layer=1,output_layer='deNovo_conv',data=self$deNovo_data)
           dna_strings <- format_activation_motifs(activations, self$test_seqs, self$filter_len, method='fixed', threshold=.75)
           plot_motifs(dna_strings,ylow=0,yhigh=2,method='bits',plotheight=NULL,fl=file.path(epoch_dir,'deNovo_motifs.pdf'))
-          if (self$run_tomtom) {
-            run_tomtom(dna_strings,pfm=T)
-          }
         }
       }
       self$epoch <- self$epoch + 1
@@ -109,14 +101,13 @@ deNovo_Motifs <- R6::R6Class("deNovo_Motifs",
                               plot_activations = FALSE,
                               plot_filters = FALSE,
                               plot_crosscorrel_motifs = FALSE,
-                              run_tomtom = FALSE,
                               deNovo_data = NULL,
                               test_labels = NULL,
                               test_seqs = NULL,
                               num_deNovo = NULL,
                               filter_len = NULL,
                               initialize = function(model = NA, N = NA, log_dir,
-                                                    plot_activations, plot_filters, plot_crosscorrel_motifs,run_tomtom,
+                                                    plot_activations, plot_filters, plot_crosscorrel_motifs,
                                                     deNovo_data, test_labels, test_seqs,
                                                     num_deNovo,filter_len) {
                                 self$model <- model
@@ -126,7 +117,6 @@ deNovo_Motifs <- R6::R6Class("deNovo_Motifs",
                                 self$plot_activations <- plot_activations
                                 self$plot_filters <- plot_filters
                                 self$plot_crosscorrel_motifs <- plot_crosscorrel_motifs
-                                self$run_tomtom <- run_tomtom
                                 self$deNovo_data <- deNovo_data
                                 self$test_labels <- test_labels
                                 self$test_seqs <- test_seqs
@@ -149,17 +139,11 @@ deNovo_Motifs <- R6::R6Class("deNovo_Motifs",
                                     b_conv1 <- self$model$get_weights()[[2]]
                                     deNovo_conv_list <- format_filter_motifs(deNovo_conv)
                                     plot_motifs(deNovo_conv_list,ylow=0,yhigh=2,method='custom',plotheight=NULL,fl=file.path(epoch_dir,"deNovo_filter.pdf"))
-                                    if (self$run_tomtom) {
-                                      run_tomtom(deNovo_conv_list,pfm=F)
-                                    }
                                   }
                                   if (self$plot_crosscorrel_motifs) {
-                                    activations <- get_activations(model,input_layer=1,output_layer='deNovo_conv',data=self$deNovo_data)
+                                    activations <- get_activations(model,input_layer=NULL,output_layer='deNovo_conv',data=self$deNovo_data)
                                     dna_strings <- format_activation_motifs(activations, self$test_seqs, self$filter_len, method='fixed', threshold=.75)
                                     plot_motifs(dna_strings,ylow=0,yhigh=2,method='bits',plotheight=NULL,fl=file.path(epoch_dir,'deNovo_motifs.pdf'))
-                                    if (self$run_tomtom) {
-                                      run_tomtom(dna_strings,pfm=T)
-                                    }
                                   }
                                 }
                                 self$epoch <- self$epoch + 1

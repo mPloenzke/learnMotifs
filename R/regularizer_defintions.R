@@ -7,7 +7,7 @@
 #' @return Sparse group lasso penalty.
 #'
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
-#' @seealso \code{\link{position_regularizer}} \code{\link{total_regularizer}} \code{\link{Z_regularizer}}
+#' @seealso \code{\link{position_regularizer}} \code{\link{total_regularizer}}
 #' @keywords filter regularizer sparse group
 #'
 #' @importFrom keras k_sum k_l2_normalize k_sum
@@ -27,7 +27,7 @@ filter_regularizer <- function(weight_matrix) {
 #' @return Lasso penalty.
 #'
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
-#' @seealso \code{\link{filter_regularizer}} \code{\link{total_regularizer}} \code{\link{Z_regularizer}}
+#' @seealso \code{\link{filter_regularizer}} \code{\link{total_regularizer}}
 #' @keywords regularizer sparse position
 #'
 #' @importFrom keras k_cast k_concatenate k_arange k_sum
@@ -40,7 +40,7 @@ position_regularizer <- function(weight_matrix) {
   return(location_penalty)
 }
 
-#' Total regularization function wrapper.
+#' Total kernel regularization function wrapper.
 #'
 #' Sum of the filter regularization and the position regularization.
 #'
@@ -49,7 +49,7 @@ position_regularizer <- function(weight_matrix) {
 #' @return Total regularization penalty.
 #'
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
-#' @seealso \code{\link{filter_regularizer}} \code{\link{position_regularizer}} \code{\link{Z_regularizer}}
+#' @seealso \code{\link{filter_regularizer}} \code{\link{position_regularizer}}
 #' @keywords regularizer sparse total position filter
 #'
 #' @export
@@ -57,23 +57,5 @@ total_regularizer <- function(weight_matrix) {
   return(filter_regularizer(weight_matrix) +
            position_regularizer(weight_matrix)
   )
-}
-
-#' Regularization of the activation values around 0.5.
-#'
-#' Regularizes the max-pooled activation value (post-sigmoid) around 0.5.
-#'
-#' @param weight_matrix Filter weights.
-#'
-#' @return Regularization penalty.
-#'
-#' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
-#' @seealso \code{\link{filter_regularizer}} \code{\link{position_regularizer}} \code{\link{total_regularizer}}
-#' @keywords regularizer sparse activation
-#'
-#' @importFrom keras k_sum k_max k_abs
-#' @export
-Z_regularizer <- function(weight_matrix) {
-  return(lambda_Z_offset*k_sum(k_abs(k_max(weight_matrix,axis=c(3L))-.5),axis=c(1L,2L,3L)))
 }
 

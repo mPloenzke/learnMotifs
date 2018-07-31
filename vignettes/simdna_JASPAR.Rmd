@@ -1,8 +1,12 @@
 ---
 title: "JASPAR motifs"
 author: "Matt Ploenzke"
-date: "7/17/2018"
-output: html_document
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Put the title of your vignette here}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
   
 ```{r setup, include=FALSE}
@@ -38,7 +42,6 @@ opt$decay_rate <- opt$learning_rate / opt$epochs / 2
 opt$plot_Activations <- TRUE
 opt$plot_filterMotifs <- TRUE
 opt$plot_empiricalMotifs <- FALSE
-opt$run_Tomtom <- FALSE
 opt$JASPAR <- file.path(opt$log_dir,'JASPAR_reference_motifs.txt')
 opt$JASPAR_pfms <- file.path(opt$log_dir,'JASPAR_known_motifs.txt')
 opt$motif_qval_threshold <- .1
@@ -376,8 +379,3 @@ plot_a1 <- plot_activation_difference(betas)
 ggsave(paste(opt$log_dir,"Betas_Jaspar_Final.pdf",sep="/"),plot=plot_a1,width=15,height=7.5,units='in')
 write.table(betas,file=file.path(opt$log_dir,'Betas_Jaspar_Final.csv'),sep=',',row.names=F,col.names=T)
 ```
-
-```{r}
-
-```
-

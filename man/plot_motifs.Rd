@@ -8,6 +8,8 @@ plot_motifs(W_conv, ylow = 0, yhigh = 2, method = "custom", plotheight,
   fl)
 }
 \arguments{
+\item{W_conv}{Either a list of motifs as ICMs, or a single ICM to visualize as sequence logos.}
+
 \item{ylow}{Minimum Y-axis limit.}
 
 \item{yhigh}{Maximum Y-axis limit.}
@@ -17,8 +19,6 @@ plot_motifs(W_conv, ylow = 0, yhigh = 2, method = "custom", plotheight,
 \item{plotheight}{Heigh in inches for output plot.}
 
 \item{fl}{Filename to save plots to. If not provided, a plot object will be returned.}
-
-\item{W_conv_list}{Tibble containing effect size information, filter name, mean activation difference, and information.}
 }
 \value{
 A ggplot object.

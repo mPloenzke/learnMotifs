@@ -18,7 +18,7 @@ Zero-padded array of one-hot encodings.
 Inputs vector of strings composed of nucleotides and outputs a zero-padded array of encodings.
 }
 \examples{
-one_hot(rep(paste(sample(c('A','C','G','T'),100,replace=T),collapse=''),50),10)
+one_hot(rep(paste(sample(c('A','C','G','T'),100,replace=TRUE),collapse=''),50),10)
 
 }
 \seealso{

@@ -13,7 +13,7 @@ format_filter_motifs(conv_filters)
 List with named motifs.
 }
 \description{
-Convert the information content motifs to a list with named rows for plotting with \link{\code{plot_motifs}}.
+Convert the information content motifs to a list with named rows for plotting with \code{\link{plot_motifs}}.
 }
 \author{
 Matthew Ploenzke, \email{ploenzke@g.harvard.edu}

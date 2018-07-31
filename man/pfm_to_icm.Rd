@@ -19,10 +19,6 @@ pfm_to_icm(motif.raw, motif.pos, mmax)
 \description{
 Convert position frequency matrix into an information content matrix to be consistent with the de novo filters.
 }
-\examples{
-
-
-}
 \seealso{
 \code{\link{find_max_length}}
 }

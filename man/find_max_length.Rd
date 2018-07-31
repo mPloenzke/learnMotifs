@@ -17,10 +17,6 @@ Length of the longest motif.
 \description{
 Loop through all motifs and return the length of the longest motif.
 }
-\examples{
-
-
-}
 \seealso{
 \code{\link{pfm_to_icm}}
 }

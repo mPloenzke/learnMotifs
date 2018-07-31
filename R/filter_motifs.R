@@ -1,6 +1,6 @@
 #' Format filters for motif plotting.
 #'
-#' Convert the information content motifs to a list with named rows for plotting with \link{\code{plot_motifs}}.
+#' Convert the information content motifs to a list with named rows for plotting with \code{\link{plot_motifs}}.
 #'
 #' @param conv_filters 4-dimensional array containing filter weights.
 #'
@@ -20,7 +20,7 @@ format_filter_motifs <- function(conv_filters) {
 }
 #' Find maximally-activating sequences for motif plotting.
 #'
-#' Find the sequeneces which maximally activate (maximially cross-correlated with) the filters and format to a list with named rows for plotting with \link{\code{plot_motifs}}.
+#' Find the sequeneces which maximally activate (maximially cross-correlated with) the filters and format to a list with named rows for plotting with \code{\link{plot_motifs}}.
 #'
 #' @param activations 4-D array of activation values per filter.
 #' @param test_seqs Data to extract nucleotide sequences from. Must be a character array.

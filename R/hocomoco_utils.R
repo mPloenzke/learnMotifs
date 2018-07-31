@@ -24,7 +24,8 @@ processHOCOMOCOText <- function(text){
 #'
 #' Reads in HOCOMOCO motifs. Slight modification of the original function available in the TFBSTools package (\code{https://github.com/ge11232002/TFBSTools}).
 #'
-#' @param fn Filename containing JASPAR-formatted HOCOMOCO PFMs
+#' @param fn Filename containing JASPAR-formatted HOCOMOCO PFMs.
+#' @param type Does the file contain \code{'individual'} PFMs or a list (\code{'all'})?
 #'
 #' @return List of PFM motifs.
 #'

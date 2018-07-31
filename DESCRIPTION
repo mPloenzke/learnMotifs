@@ -20,4 +20,8 @@ Imports:
     ggplot2,
     ggrepel,
     ggseqlogo
+Suggests: 
+    knitr, 
+    rmarkdown
+VignetteBuilder: knitr
 Depends: R (>= 2.10)

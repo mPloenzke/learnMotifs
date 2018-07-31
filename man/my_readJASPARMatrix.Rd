@@ -8,6 +8,8 @@ my_readJASPARMatrix(fn, type = c("individual", "all"))
 }
 \arguments{
 \item{fn}{Filename containing JASPAR-formatted PFMs}
+
+\item{type}{Does the file contain \code{'individual'} PFMs or a list (\code{'all'})?}
 }
 \value{
 List of PFM motifs.

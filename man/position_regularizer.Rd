@@ -16,7 +16,7 @@ Lasso penalty.
 L1 regularization penalty to constrain individual filter weights with decaying strength nearing the center of tte filter.
 }
 \seealso{
-\code{\link{filter_regularizer}} \code{\link{total_regularizer}} \code{\link{Z_regularizer}}
+\code{\link{filter_regularizer}} \code{\link{total_regularizer}}
 }
 \author{
 Matthew Ploenzke, \email{ploenzke@g.harvard.edu}

@@ -8,9 +8,9 @@ format_activations(model, data, y, input_layer = 1, output_layer,
   buffer = 0, motif.names)
 }
 \arguments{
-\item{model}{A \link{\code{Keras}} model.}
+\item{model}{A \code{Keras} model.}
 
-\item{data}{Data array returned from \link{\code{one_hot}} to obtain activations for.}
+\item{data}{Data array returned from \code{\link{one_hot}} to obtain activations for.}
 
 \item{y}{Vector of class labels.}
 
@@ -26,7 +26,7 @@ format_activations(model, data, y, input_layer = 1, output_layer,
 Tibble of formatted activations.
 }
 \description{
-Format the first-layer filter activations for plotting with \link{\code{plot_filter_activations_byClass}}.
+Format the first-layer filter activations for plotting with \code{\link{plot_filter_activations_byClass}}.
 }
 \author{
 Matthew Ploenzke, \email{ploenzke@g.harvard.edu}

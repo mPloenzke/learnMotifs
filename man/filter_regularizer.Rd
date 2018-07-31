@@ -16,7 +16,7 @@ Sparse group lasso penalty.
 L1 regularization penalty to constrain individual filter weights plus the L1/L2 regularization to collectively regularize the entire convolutional filter as a group.
 }
 \seealso{
-\code{\link{position_regularizer}} \code{\link{total_regularizer}} \code{\link{Z_regularizer}}
+\code{\link{position_regularizer}} \code{\link{total_regularizer}}
 }
 \author{
 Matthew Ploenzke, \email{ploenzke@g.harvard.edu}

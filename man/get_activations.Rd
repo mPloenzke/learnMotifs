@@ -7,13 +7,13 @@
 get_activations(model, input_layer = NULL, output_layer, data)
 }
 \arguments{
-\item{model}{A \link{\code{Keras}} model.}
+\item{model}{A \code{Keras} model.}
 
 \item{input_layer}{Integer value denoting the input data. If NULL, assumes a single input layer.}
 
 \item{output_layer}{Integer denoting output layer or string containing the layer name.}
 
-\item{data}{Data array returned from \link{\code{one_hot}} to obtain activations for.}
+\item{data}{Data array returned from \code{\link{one_hot}} to obtain activations for.}
 }
 \value{
 Array of activations.
