@@ -4,11 +4,11 @@
 \alias{calculate_offsets}
 \title{Calculate offset}
 \usage{
-calculate_offsets(icm.motifs, motif.pos, motif.maxlen, onehot_array,
-  batchsize = 256)
+calculate_offsets(filter.motifs, motif.pos = NULL, motif.maxlen,
+  onehot_array, batchsize = 256)
 }
 \arguments{
-\item{icm.motifs}{4-D array of ICMs.}
+\item{filter.motifs}{4-D array of ICMs.}
 
 \item{motif.pos}{Vector of indices to extract motifs. If \code{NULL} all motifs will be selected.}
 

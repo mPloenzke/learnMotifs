@@ -13,7 +13,7 @@
 #' @keywords pfm icm information content motif
 #'
 #' @export
-pfm_to_icm <- function(motif.raw, motif.pos, mmax) {
+pfm_to_icm <- function(motif.raw, motif.pos=NULL, mmax) {
   if (is.null(motif.pos)) {motif.pos <- 1:length(motif.raw)}
   annotated.motifs <- array(NA,dim=c(4,mmax,1,length(motif.pos)))
   for (j in 1:length(motif.pos)) {
@@ -30,6 +30,39 @@ pfm_to_icm <- function(motif.raw, motif.pos, mmax) {
   return(annotated.motifs)
 }
 
+#' Convert PFM to PWM.
+#'
+#' Convert position frequency matrix into a position weight matrix.
+#'
+#' @param motif.raw List of annotated motifs as PFMs.
+#' @param motif.pos Vector of indices to extract motifs. If \code{NULL} all motifs will be selected.
+#' @param mmax Maximum motif length, found via \code{\link{find_max_length}}.
+#' @param pseudoprob Pseudo-probability to add to PPM entries.
+#'
+#' @return 4-D array containing PWMs of the extracted motifs.
+#'
+#' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
+#' @seealso \code{\link{find_max_length}}
+#' @keywords pfm pwm position weight motif
+#'
+#' @export
+pfm_to_pwm <- function(motif.raw, motif.pos=NULL, mmax, pseudoprob=1e-3) {
+  if (is.null(motif.pos)) {motif.pos <- 1:length(motif.raw)}
+  annotated.motifs <- array(NA,dim=c(4,mmax,1,length(motif.pos)))
+  for (j in 1:length(motif.pos)) {
+    pfm <- as.matrix(motif.raw[[motif.pos[j]]])
+    ppm <- pfm/matrix(colSums(pfm),nrow=4,ncol=ncol(pfm),byrow=T)
+    if (ncol(pfm)<mmax) {
+      new <- matrix(0,nrow=4,ncol=mmax-ncol(pfm))
+      pfm <- cbind(pfm,new)
+      ppm <- cbind(ppm,new)
+    }
+    annotated.motifs[,,,j] <- log2((ppm+pseudoprob)/matrix(.25,nrow=4,ncol=mmax))
+  }
+  return(annotated.motifs)
+}
+
+
 #' Find maximum motif length.
 #'
 #' Loop through all motifs and return the length of the longest motif.
@@ -41,7 +74,7 @@ pfm_to_icm <- function(motif.raw, motif.pos, mmax) {
 #'
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
 #' @seealso \code{\link{pfm_to_icm}}
-#' @keywords pfm icm information content motif
+#' @keywords pfm igm information gain motif
 #'
 #' @export
 find_max_length <- function(motif.raw, motif.pos) {

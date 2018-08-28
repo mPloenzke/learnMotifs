@@ -76,7 +76,7 @@ combo_Motifs <- R6::R6Class("combo_Motifs",
         }
         if (self$plot_crosscorrel_motifs) {
           activations <- get_activations(model,input_layer=1,output_layer='deNovo_conv',data=self$deNovo_data)
-          dna_strings <- format_activation_motifs(activations, self$test_seqs, self$filter_len, method='fixed', threshold=.75)
+          dna_strings <- format_activation_motifs(activations, self$test_seqs, self$filter_len, method='alipinahi', threshold=.75)
           plot_motifs(dna_strings,ylow=0,yhigh=2,method='bits',plotheight=NULL,fl=file.path(epoch_dir,'deNovo_motifs.pdf'))
         }
       }
@@ -142,7 +142,7 @@ deNovo_Motifs <- R6::R6Class("deNovo_Motifs",
                                   }
                                   if (self$plot_crosscorrel_motifs) {
                                     activations <- get_activations(model,input_layer=NULL,output_layer='deNovo_conv',data=self$deNovo_data)
-                                    dna_strings <- format_activation_motifs(activations, self$test_seqs, self$filter_len, method='fixed', threshold=.75)
+                                    dna_strings <- format_activation_motifs(activations, self$test_seqs, self$filter_len, method='alipinahi', threshold=.75)
                                     plot_motifs(dna_strings,ylow=0,yhigh=2,method='bits',plotheight=NULL,fl=file.path(epoch_dir,'deNovo_motifs.pdf'))
                                   }
                                 }

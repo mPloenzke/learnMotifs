@@ -4,11 +4,12 @@
 \alias{layer_deNovo}
 \title{Custom 2-D convolution wrapper with to learn ICMs.}
 \usage{
-layer_deNovo(object, filters, filter_len, lambda_pos = 0, lambda_filter = 0,
-  lambda_l1 = 0, lambda_offset = 0, strides = c(1L, 1L),
-  padding = "valid", activation = "sigmoid", use_bias = TRUE,
-  kernel_initializer = initializer_random_uniform(0, 0.5),
-  bias_initializer = "zeros", kernel_regularizer = total_regularizer,
+layer_deNovo(object, filters, filter_len, lambda_pos = 0,
+  lambda_filter = 0, lambda_l1 = 0, lambda_offset = 0,
+  strides = c(1L, 1L), padding = "valid", activation = "sigmoid",
+  use_bias = TRUE, kernel_initializer = initializer_random_uniform(0,
+  0.5), bias_initializer = "zeros",
+  kernel_regularizer = total_regularizer,
   kernel_constraint = info_constraint,
   bias_constraint = negative_constraint, input_shape = NULL,
   name = "deNovo_conv", trainable = NULL)

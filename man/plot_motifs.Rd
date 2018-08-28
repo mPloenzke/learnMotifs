@@ -4,8 +4,8 @@
 \alias{plot_motifs}
 \title{Plot filter motifs.}
 \usage{
-plot_motifs(W_conv, ylow = 0, yhigh = 2, method = "custom", plotheight,
-  fl)
+plot_motifs(W_conv, ylow = 0, yhigh = 2, method = "custom",
+  plotheight = NULL, fl)
 }
 \arguments{
 \item{W_conv}{Either a list of motifs as ICMs, or a single ICM to visualize as sequence logos.}
@@ -16,7 +16,7 @@ plot_motifs(W_conv, ylow = 0, yhigh = 2, method = "custom", plotheight,
 
 \item{method}{Y-label calculation type for sequence logo plot. Either \code{'custom'} or \code{'bits'}.}
 
-\item{plotheight}{Heigh in inches for output plot.}
+\item{plotheight}{Height in inches for output plot.}
 
 \item{fl}{Filename to save plots to. If not provided, a plot object will be returned.}
 }

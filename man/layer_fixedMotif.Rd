@@ -4,10 +4,10 @@
 \alias{layer_fixedMotif}
 \title{Custom 2-D convolution wrapper with fixed ICMs}
 \usage{
-layer_fixedMotif(object, filters, motif_maxlen, fixed.motifs, fixed.offsets,
-  input_shape = NULL, strides = c(1L, 1L), padding = "valid",
-  activation = "sigmoid", use_bias = TRUE, name = "fixedMotif_conv",
-  trainable = FALSE)
+layer_fixedMotif(object, filters, motif_maxlen, fixed.motifs,
+  fixed.offsets, input_shape = NULL, strides = c(1L, 1L),
+  padding = "valid", activation = "sigmoid", use_bias = TRUE,
+  name = "fixedMotif_conv", trainable = FALSE)
 }
 \arguments{
 \item{object}{Keras model object.}

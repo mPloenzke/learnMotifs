@@ -2,7 +2,7 @@
 #'
 #' Calculate the offset (bias) as the mean activation over a sampling of the data.
 #'
-#' @param icm.motifs 4-D array of ICMs.
+#' @param filter.motifs 4-D array of ICMs.
 #' @param motif.pos Vector of indices to extract motifs. If \code{NULL} all motifs will be selected.
 #' @param motif.maxlen Maximum motif length, found via \code{\link{find_max_length}}.
 #' @param onehot_array One-hot encoded training data to sample a batch from.
@@ -16,13 +16,13 @@
 #'
 #' @importFrom keras keras_model_sequential layer_conv_2d layer_max_pooling_2d layer_flatten compile
 #' @export
-calculate_offsets <- function(icm.motifs, motif.pos, motif.maxlen, onehot_array, batchsize=256) {
-  if (is.null(motif.pos)) {motif.pos <- 1:dim(icm.motifs)[4]}
+calculate_offsets <- function(filter.motifs, motif.pos=NULL, motif.maxlen, onehot_array, batchsize=256) {
+  if (is.null(motif.pos)) {motif.pos <- 1:dim(filter.motifs)[4]}
   model_offset <- keras_model_sequential()
   model_offset %>%
     layer_conv_2d(filters = length(motif.pos),
                   kernel_size = c(4,motif.maxlen),
-                  kernel_initializer = initializer_constant(icm.motifs),
+                  kernel_initializer = initializer_constant(filter.motifs),
                   kernel_constraint = fixedMotif_constraint,
                   use_bias = FALSE,
                   input_shape = c(4, opt$max_len+2*motif.maxlen-2, 1),

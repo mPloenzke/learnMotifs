@@ -3,7 +3,7 @@
 #' A dataset containing nucleotide sequences of length 200 basepairs composed of nucleotides A, C, G, T.
 #' Each sequence contains between 0-3 ocurrences of the MYC, CTCF, or IRF motifs.
 #'
-#' @format A data frame with 5000 rows and 3 variables:
+#' @format A data frame with 1000 rows and 3 variables:
 #' \describe{
 #'   \item{seqName}{Sequence identifier}
 #'   \item{sequence}{Nucleotide sequences}
@@ -16,7 +16,7 @@
 #' A dataset containing nucleotide sequences of length 200 basepairs composed of nucleotides A, C, G, T.
 #' Each sequence is sampled from random genome background with 60% GC-content.
 #'
-#' @format A data frame with 5000 rows and 3 variables:
+#' @format A data frame with 1000 rows and 3 variables:
 #' \describe{
 #'   \item{seqName}{Sequence identifier}
 #'   \item{sequence}{Nucleotide sequences}

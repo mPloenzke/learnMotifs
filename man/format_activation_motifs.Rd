@@ -4,7 +4,8 @@
 \alias{format_activation_motifs}
 \title{Find maximally-activating sequences for motif plotting.}
 \usage{
-format_activation_motifs(activations, test_seqs, filter_len, method, threshold)
+format_activation_motifs(activations, test_seqs, filter_len, method,
+  threshold)
 }
 \arguments{
 \item{activations}{4-D array of activation values per filter.}
@@ -13,7 +14,7 @@ format_activation_motifs(activations, test_seqs, filter_len, method, threshold)
 
 \item{filter_len}{Length of the sequence motif to extract; the length of the convolutional filters.}
 
-\item{method}{Either \code{'fixed'} (extract the sequences with activation greater than \code{threshold*max_activation}),
+\item{method}{Either \code{'alipinahi'} (extract the sequences with activation greater than \code{threshold*max_activation}),
 \code{'max-pooled'} (extract the sequences which gave rise to the max-pooled value), or
 \code{'quantile'} (extract the sequences with activation greater than \code{quantile(activations,probs=threshold)}.}
 

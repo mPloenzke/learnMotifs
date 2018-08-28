@@ -83,21 +83,43 @@ format_activations <- function(model,data,y,input_layer=1,output_layer,buffer=0,
   flat0 <- as.tibble(get_activations(model,input_layer,output_layer,data[y==0,,,,drop=F]))
   flat0$y <- 0
   flat_tibble <- bind_rows(flat1,flat0)
-  colnames(flat_tibble) <- c(motif.names,'Y')
+  if (length(motif.names) == (ncol(flat_tibble)-1)) {
+    simple <- TRUE
+    colnames(flat_tibble) <- c(motif.names,'Y')
+  } else {
+    simple <- FALSE
+    num <- (ncol(flat_tibble)-1)/length(motif.names)
+    colnames(flat_tibble) <- c(paste('Motif',rep(motif.names,each=num),'Loc',1:num,sep='_'),'Y')
+  }
   flat_tibble$Y <- as.factor(flat_tibble$Y)
-  flat_tibble <- gather(flat_tibble,Filter,Activation,1:length(motif.names))
+  flat_tibble <- gather(flat_tibble,Filter,Activation,1:(ncol(flat1)-1))
   flat_tibble$Filter <- factor(flat_tibble$Filter)
   W_fc1 <- as.tibble(model$get_weights()[[(length(model$get_weights())-1)]])
   b_conv1 <- as.tibble(model$get_weights()[[ifelse(is.null(input_layer),2,2*input_layer)]])
-  W_fc1 <- W_fc1[(buffer+1):(buffer+length(motif.names)),1]
   names(W_fc1) <- 'W_fc1'
   names(b_conv1) <- 'b_conv1'
-  W_fc1$Filter <- as.factor(motif.names)
-  b_conv1$Filter <- as.factor(motif.names)
-  flat_tibble <- flat_tibble %>%
-    left_join(W_fc1,by='Filter') %>%
-    left_join(b_conv1,by='Filter') %>%
-    mutate(Dense_Activation = W_fc1*Activation)
+  if (simple) {
+    W_fc1 <- W_fc1[(buffer+1):(buffer+length(motif.names)),1]
+    W_fc1$Filter <- as.factor(motif.names)
+    b_conv1$Filter <- as.factor(motif.names)
+    flat_tibble <- flat_tibble %>%
+      left_join(W_fc1,by='Filter') %>%
+      left_join(b_conv1,by='Filter') %>%
+      mutate(Dense_Activation = W_fc1*Activation)
+  } else {
+    W_fc1 <- W_fc1[(buffer+1):(buffer+(ncol(flat1)-1)),1]
+    W_fc1$Filter <- as.factor(paste(paste('Motif',rep(motif.names,times=num),sep='_'),
+                                    rep(paste('Loc',1:num,sep='_'),each=length(motif.names)),sep='_'))
+    b_conv1$Filter2 <- as.factor(motif.names)
+    flat_tibble$Filter2 <- as.factor(sapply(strsplit(as.character(flat_tibble$Filter),'_'),`[`, 2))
+    flat_tibble <- flat_tibble %>%
+      left_join(W_fc1,by='Filter') %>%
+      left_join(b_conv1,by='Filter2') %>%
+      mutate(Dense_Activation = W_fc1*Activation,
+             Location=sapply(strsplit(as.character(flat_tibble$Filter),'_'),`[`, 4),
+             Filter=Filter2) %>%
+      select(-Filter2)
+  }
   flat_tibble$Filter <- as.character(flat_tibble$Filter)
   return(flat_tibble)
 }

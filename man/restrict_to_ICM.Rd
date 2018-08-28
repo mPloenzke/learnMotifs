@@ -4,12 +4,14 @@
 \alias{restrict_to_ICM}
 \title{Constrains weights to be valid information measures.}
 \usage{
-restrict_to_ICM(wts, offset)
+restrict_to_ICM(wts, offset, bg = c(0.25, 0.25, 0.25, 0.25))
 }
 \arguments{
 \item{wts}{Convolutional filter weights.}
 
 \item{offset}{Filter offset weights.}
+
+\item{bg}{Vector of background nucleotide probabilities (A, C, G, T)}
 }
 \value{
 Rescaled weights.

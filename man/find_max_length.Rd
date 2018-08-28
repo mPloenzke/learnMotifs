@@ -23,8 +23,8 @@ Loop through all motifs and return the length of the longest motif.
 \author{
 Matthew Ploenzke, \email{ploenzke@g.harvard.edu}
 }
-\keyword{content}
-\keyword{icm}
+\keyword{gain}
+\keyword{igm}
 \keyword{information}
 \keyword{motif}
 \keyword{pfm}

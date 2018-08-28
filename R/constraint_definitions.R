@@ -82,6 +82,7 @@ fixedMotif_constraint <- function(w) {
 #'
 #' @param wts Convolutional filter weights.
 #' @param offset Filter offset weights.
+#' @param bg Vector of background nucleotide probabilities (A, C, G, T)
 #'
 #' @return Rescaled weights.
 #'
@@ -89,7 +90,7 @@ fixedMotif_constraint <- function(w) {
 #' @keywords ICM constraint information
 #'
 #' @export
-restrict_to_ICM <- function(wts,offset) {
+restrict_to_ICM <- function(wts,offset,bg=c(.25,.25,.25,.25)) {
   curr.info <- apply(wts,4,sum)
   newwts <- lapply(1:dim(wts)[4], function(j) {
     i <- wts[,,,j,drop=FALSE]
@@ -98,7 +99,8 @@ restrict_to_ICM <- function(wts,offset) {
     ppm <- (i)/array(matrix(colSums(i),nrow=4,ncol=ncol(i),byrow=T),dim=dim(i))
     ppm[is.nan(ppm)] <- .25
     # convert back to valid icm
-    R_i = pmax(2 + apply(ppm, 2, function(col) sum(col * log2(col),na.rm=T)),0)
+    #R_i = pmax(2 + apply(ppm, 2, function(col) sum(col * log2(col),na.rm=T)),0)
+    R_i = pmax(apply(ppm, 2, function(col) sum(col * log2(col/bg),na.rm=T)),0)
     icm <- ppm*array(matrix(R_i,nrow=4,ncol=ncol(ppm),byrow=T),dim=dim(ppm))
   })
   newwts <- do.call(abind,newwts)

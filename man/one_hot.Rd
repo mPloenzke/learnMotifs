@@ -4,12 +4,14 @@
 \alias{one_hot}
 \title{One-hot encoding of vector of DNA nucleotide strings}
 \usage{
-one_hot(data, zeros_len)
+one_hot(data, zeros_len, max_len = NULL)
 }
 \arguments{
 \item{data}{Character strings composed of nucleotides A, C, G, T.}
 
 \item{zeros_len}{Integer value denoting number of zeros to pad vector with. Commonly the convolutional filter length - 1.}
+
+\item{max_len}{Maximum sequence length. If unspecified defaults to the maximum number of characters present in the data character strings.}
 }
 \value{
 Zero-padded array of one-hot encodings.

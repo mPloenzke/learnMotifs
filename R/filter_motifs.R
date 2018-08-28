@@ -25,7 +25,7 @@ format_filter_motifs <- function(conv_filters) {
 #' @param activations 4-D array of activation values per filter.
 #' @param test_seqs Data to extract nucleotide sequences from. Must be a character array.
 #' @param filter_len Length of the sequence motif to extract; the length of the convolutional filters.
-#' @param method Either \code{'fixed'} (extract the sequences with activation greater than \code{threshold*max_activation}),
+#' @param method Either \code{'alipinahi'} (extract the sequences with activation greater than \code{threshold*max_activation}),
 #' \code{'max-pooled'} (extract the sequences which gave rise to the max-pooled value), or
 #' \code{'quantile'} (extract the sequences with activation greater than \code{quantile(activations,probs=threshold)}.
 #' @param threshold Threshold above which to extract sequences.

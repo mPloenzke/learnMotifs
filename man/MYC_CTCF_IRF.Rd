@@ -4,7 +4,7 @@
 \name{MYC_CTCF_IRF}
 \alias{MYC_CTCF_IRF}
 \title{Nucleotide sequences sampled from known motifs.}
-\format{A data frame with 5000 rows and 3 variables:
+\format{A data frame with 1000 rows and 3 variables:
 \describe{
   \item{seqName}{Sequence identifier}
   \item{sequence}{Nucleotide sequences}
