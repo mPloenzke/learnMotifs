@@ -8,7 +8,7 @@ calculate_offsets(filter.motifs, motif.pos = NULL, motif.maxlen,
   onehot_array, batchsize = 256)
 }
 \arguments{
-\item{filter.motifs}{4-D array of ICMs.}
+\item{filter.motifs}{4-D array of IGMs or PWMs.}
 
 \item{motif.pos}{Vector of indices to extract motifs. If \code{NULL} all motifs will be selected.}
 
@@ -19,7 +19,7 @@ calculate_offsets(filter.motifs, motif.pos = NULL, motif.maxlen,
 \item{batchsize}{Size of batch to sample.}
 }
 \value{
-Vector of offsets of length equal to the fourth dimension of the input array of ICMs.
+Vector of offsets of length equal to the fourth dimension of the input array of IGMs/PWMs.
 }
 \description{
 Calculate the offset (bias) as the mean activation over a sampling of the data.

@@ -1,6 +1,8 @@
 #' Top max-pooled hits
 #'
-#' Calculate the top N motif hits max-pooled over the entire sequence.
+#' Calculate the top N motif hits max-pooled over the entire sequence. This function uses the \code{keras} \code{k_max} function which internally
+#' converts the input to its pre-activation scale. Therefore we recommend using the \code{linear} activation for the layer feeding into
+#' this one and then using the \code{layer_activation} function after the operation.
 #'
 #' @param object Keras model.
 #' @param n_max Number of top hits to return.
@@ -45,7 +47,7 @@ topN_max_pooling <- R6::R6Class("topN_max_pooling",
                                         a <- k_concatenate(c(a, b), axis = 3)
                                       }
                                     }
-                                    a
+                                    return(a)
                                   },
                                   compute_output_shape = function(input_shape) {
                                     input_shape[[3]] <- self$n_max

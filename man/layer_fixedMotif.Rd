@@ -2,7 +2,7 @@
 % Please edit documentation in R/layer_fixedMotif.R
 \name{layer_fixedMotif}
 \alias{layer_fixedMotif}
-\title{Custom 2-D convolution wrapper with fixed ICMs}
+\title{Custom 2-D convolution wrapper for fixed IGMs or PWMs}
 \usage{
 layer_fixedMotif(object, filters, motif_maxlen, fixed.motifs,
   fixed.offsets, input_shape = NULL, strides = c(1L, 1L),

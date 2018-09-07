@@ -3,6 +3,8 @@
 #' Convert the information content motifs to a list with named rows for plotting with \code{\link{plot_motifs}}.
 #'
 #' @param conv_filters 4-dimensional array containing filter weights.
+#' @param type String declaring motif representation type (either `IGM` or `PWM`).
+#' @param bg Vector of background nucleotide probabilities (A, C, G, T)
 #'
 #' @return List with named motifs.
 #'
@@ -10,8 +12,18 @@
 #' @keywords motif filter format
 #'
 #' @export
-format_filter_motifs <- function(conv_filters) {
+format_filter_motifs <- function(conv_filters, type='IGM', bg=c(.25,.25,.25,.25)) {
   W_conv_list <- list()
+  if (type=='PWM') {
+    bg.array <- array(matrix(bg,nrow=4,ncol=ncol(i),byrow=F),dim=dim(i))
+    for (filt in 1:dim(conv_filters)[4]) {
+      i <- conv_filters[,,,filt,drop=FALSE]
+      ppm <- (2^i)*bg.array
+      ppm <- ppm/array(matrix(colSums(ppm),nrow=4,ncol=ncol(i),byrow=T),dim=dim(i))
+      R_i = pmax(apply(ppm, 2, function(col) sum(col * log2(col/bg),na.rm=T)),0)
+      conv_filters[,,,filt] <- ppm*array(matrix(R_i,nrow=4,ncol=ncol(ppm),byrow=T),dim=dim(ppm))
+    }
+  }
   for (filt in 1:dim(conv_filters)[4]) {
     if (all(conv_filters[,,,filt]==0)) {conv_filters[,,,filt] <- conv_filters[,,,filt]+1e-10}
     W_conv_list[[paste('Filter',filt,sep=' ')]] <- matrix(conv_filters[,,,filt],nrow=4,dimnames=list(c('A', 'C', 'G', 'T')))

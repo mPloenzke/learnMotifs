@@ -14,13 +14,13 @@ knitr::opts_chunk$set(
 
 # learnMotifs
 
-[learnMotifs](https://github.com/mPloenzke/learnMotifs) implements the weight constrained and regularized convolutional filter layers for learning sequence motifs as information gain matrices (IGMs) or position weight matrices (PWMs) directly. The package relies upon [Keras](https://keras.rstudio.com/) to perform much of the heavy lifting. 
+[learnMotifs](https://github.com/mPloenzke/learnMotifs) implements the weight constrained and regularized convolutional filter layers for learning sequence motifs as information gain matrices (IGMs) or position weight matrices (PWMs) directly. The package relies upon [Keras](https://keras.rstudio.com/) to perform much of the heavy lifting. It is being updated to include more vignettes, features, and broader generalizability so bugs may exist. If you encounter a bug, please file a minimal reproducible example on [github](https://github.com/mPloenzke/learnMotif/issues). 
 
 ## Installation
 
 Begin by installing the [Keras](https://keras.rstudio.com/) package. 
 
-```{r}
+```{r,eval=FALSE}
 install.packages('keras')
 ```
 
@@ -28,6 +28,10 @@ Additionally, we recommend installing the TensorFlow backend.
 
 ```{r}
 library(keras)
+```
+
+Install keras if it has not already been installed.
+```{r, eval=FALSE}
 install_keras()
 ```
 
@@ -53,5 +57,4 @@ Several additional functions are available to aid in the analysis pipeline and i
 1. Callback definitions - These are used as model wrappers to output diagnostics peri-training.
 2. Helper functions - Simple functions to import database motifs, set up log directories, one-hot encode nucleotide sequences, etc.
 3. Activation functions - Model interpretability is improved by assessing filter activations. To this end functions are included to manipulate the activation values produced by each motif and optionally plot them with [ggplot2](https://ggplot2.tidyverse.org/).
-    
-If you encounter a bug, please file a minimal reproducible example on [github](https://github.com/mPloenzke/learnMotif/issues). 
+

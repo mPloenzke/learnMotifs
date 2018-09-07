@@ -9,7 +9,7 @@ vignette: >
   \usepackage[utf8]{inputenc}
 ---
 
-The package relies upon [keras](https://keras.rstudio.com/) to perform much of the heavy lifting. 
+The package relies upon [keras](https://keras.rstudio.com/) to perform much of the heavy lifting. Start by making sure the `keras` package is installed and may be loaded. 
 ```{r setup, include=FALSE}
 rm(list=ls(all=TRUE))
 knitr::opts_chunk$set(echo = TRUE)
@@ -18,40 +18,40 @@ library(learnMotifs)
 library(ggplot2)
 ```
 
-Set model options.
+Set model options. Note we do not cache or set a seed so results will differ each run.
 ```{r}
 rm(list=ls(all=TRUE))
 opt <- list()
-opt$max_len <- 200
-opt$log_dir <- 'log'
-opt$embedding_pos <- 'GGGGGGGG'
-opt$embedding_neg <- 'CCCCCCCC'
-opt$batch_size <- 64
-opt$epochs <- 10
-opt$n_filters <- 4
-opt$filter_len <- 12
-opt$lambda_pos <- 1.5e-3
-opt$lambda_filter <- 1e-12
-opt$lambda_l1 <- 3e-3
-opt$lambda_offset <- 0
-opt$lambda_beta <- 2.5e-3
-opt$learning_rate <- 0.02
-opt$decay_rate <- opt$learning_rate / opt$epochs / 2
-opt$plot_Activations <- TRUE
-opt$plot_filterMotifs <- TRUE
-opt$plot_empiricalMotifs <- FALSE
-opt$output_plots_every <- 5
-opt$downsample <- 1
-opt$shuffle <- .1
-opt$cache_Old <- TRUE
+opt$max_len <- 200 # sequence length
+opt$log_dir <- 'log' #logging directory
+opt$embedding_pos <- 'GGGGGGGG' # sub-sequence inserted into Y=1 sequences
+opt$embedding_neg <- 'CCCCCCCC' # sub-sequence inserted into Y=0 sequences
+opt$batch_size <- 64 # batch size for training 
+opt$epochs <- 20 # training epochs
+opt$n_filters <- 4 # number of convolutional filters
+opt$filter_len <- 12 # convolutional filter length
+opt$lambda_pos <- 3e-3 # regularization penalty for position-specific weights in filters
+opt$lambda_filter <- 1e-8 # group regularization penalty treating filter as groups
+opt$lambda_l1 <- 3e-3 # regularization penalty for all weights in filters
+opt$lambda_offset <- 0 # regularization penalty for the offset used in the convolutional filters
+opt$lambda_beta <- 3e-3 # regularization penalty for the betas (effect sizes)
+opt$learning_rate <- 0.02 # stochastic gradient descent learning rate
+opt$decay_rate <- opt$learning_rate / opt$epochs / 2 # decay for learning rate
+opt$plot_Activations <- TRUE # boxplot of activation differences by class per filter
+opt$plot_filterMotifs <- TRUE # plot sequence logos (IGMs) directly
+opt$plot_empiricalMotifs <- FALSE # plot sequence logos from maximally-activated sub-sequences
+opt$output_plots_every <- 5 # plotting frequency (every X epochs)
+opt$downsample <- 1 # downsample training cases (provide a proportion)
+opt$shuffle <- .1 # proportion of cases to shuffle
+opt$cache_Old <- TRUE # cache old results
 ```
 
-Load random nucleotide sequences files.
+Load random nucleotide sequences files. Here we'll simply use sequences with no embedded motifs and insert the `embedding_pos` and `embedding_neg` patterns into the postive and negative cases, respectively.
 ```{r}
 negative.cases <- EmptyBackground
 ```
 
-Join and randomly shuffle to increase difficulty.
+Join and randomly shuffle to increase difficulty. Embed the patterns.
 ```{r}
 idx <- as.logical(rbinom(nrow(negative.cases),size=1,.5))
 positive.cases <- negative.cases[idx,]
@@ -96,13 +96,13 @@ setup_log_dir(opt)
 write.table(cbind(validation_data,validation_labels),file=file.path(opt$log_dir,'testset.csv'),sep=',',row.names=F,col.names=F)
 ```
 
-One-hot encode for the de novo model.
+One-hot encode for the model.
 ```{r}
 training_array <- one_hot(training_data,opt$filter_len)
 validation_array <- one_hot(validation_data,opt$filter_len)
 ```
 
-Build the de novo model.
+Build the model following typical `keras` syntax.
 ```{r}
 deNovo_sequence <- layer_input(shape=c(4,opt$max_len + 2*opt$filter_len-2,1),name='deNovo_input')
 deNovo_model <- deNovo_sequence %>%
@@ -112,8 +112,9 @@ deNovo_model <- deNovo_sequence %>%
                lambda_filter=opt$lambda_filter,
                lambda_l1=opt$lambda_l1,
                lambda_offset=opt$lambda_offset,
-               input_shape = c(4, opt$max_len+2*opt$filter_len-2, 1)) %>%
-  layer_topN_max_pooling(n_max=1,name='deNovo_pool') %>%
+               input_shape = c(4, opt$max_len+2*opt$filter_len-2, 1),
+               activation='sigmoid') %>%
+  layer_max_pooling_2d(pool_size = c(1,(opt$max_len+opt$filter_len-1)),name='deNovo_pool') %>%
   layer_flatten(name='deNovo_flatten') %>%
   layer_dense(units=1,activation='sigmoid',kernel_regularizer = regularizer_l1(l=opt$lambda_beta))
 model <- keras_model(
@@ -126,9 +127,9 @@ model %>% compile(
 )
 ```
 
-Learn motifs.
+Learn motifs. Define a callback to output plots during the training procedure and ensure weights represent IGMs.
 ```{r}
-deNovo_callback <- deNovo_Motifs$new(model,opt$output_plots_every,opt$log_dir,
+deNovo_callback <- deNovo_IGM_Motifs$new(model,opt$output_plots_every,opt$log_dir,
                                      plot_activations=opt$plot_Activations, 
                                      plot_filters=opt$plot_filterMotifs,
                                      plot_crosscorrel_motifs=opt$plot_empiricalMotifs,

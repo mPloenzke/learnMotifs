@@ -1,4 +1,4 @@
-#' Custom 2-D convolution wrapper with fixed ICMs
+#' Custom 2-D convolution wrapper for fixed IGMs or PWMs
 #'
 #' Custom 2-D convolution wrapper for fixed motifs, such as those coming from a database.
 #'

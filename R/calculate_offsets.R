@@ -2,13 +2,13 @@
 #'
 #' Calculate the offset (bias) as the mean activation over a sampling of the data.
 #'
-#' @param filter.motifs 4-D array of ICMs.
+#' @param filter.motifs 4-D array of IGMs or PWMs.
 #' @param motif.pos Vector of indices to extract motifs. If \code{NULL} all motifs will be selected.
 #' @param motif.maxlen Maximum motif length, found via \code{\link{find_max_length}}.
 #' @param onehot_array One-hot encoded training data to sample a batch from.
 #' @param batchsize Size of batch to sample.
 #'
-#' @return Vector of offsets of length equal to the fourth dimension of the input array of ICMs.
+#' @return Vector of offsets of length equal to the fourth dimension of the input array of IGMs/PWMs.
 #'
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
 #' @seealso \code{\link{find_max_length}}

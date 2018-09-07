@@ -90,19 +90,24 @@ plot_filter_activations_byClass <- function(data,show_beta=F,show_offset=F,fl=NU
             legend.text = element_text(size=14),
             legend.position = 'right',
             axis.text.x = element_text(angle = 45, hjust = 1)) +
-      ylab('P(Z=1)') +
-      geom_point(aes(shape='Beta_1'),alpha=0) +
-      geom_point(aes(color='Beta_0'),alpha=0)
+      ylab('Activation')
     if (show_beta & show_offset) {
-      p <- p + guides(fill=guide_legend(order=1),
-                      shape=guide_legend(title=NULL, override.aes = list(alpha = 1,color='red',shape=4,size=2.5,order=2)),
-                      color=guide_legend(title=NULL, override.aes = list(alpha = 1,color='blue',shape=3,size=2.5,order=3)))
+      p <- p +
+        geom_point(aes(shape='Beta_1'),alpha=0) +
+        geom_point(aes(color='Beta_0'),alpha=0) +
+        guides(fill=guide_legend(order=1),
+               shape=guide_legend(title=NULL, override.aes = list(alpha = 1,color='red',shape=4,size=2.5,order=2)),
+               color=guide_legend(title=NULL, override.aes = list(alpha = 1,color='blue',shape=3,size=2.5,order=3)))
     } else if (show_beta) {
-      p <- p + guides(fill=guide_legend(order=1),
-                      shape=guide_legend(title=NULL, override.aes = list(alpha = 1,color='red',shape=4,size=2.5,order=2)))
+      p <- p +
+      geom_point(aes(shape='Beta_1'),alpha=0) +
+        guides(fill=guide_legend(order=1),
+               shape=guide_legend(title=NULL, override.aes = list(alpha = 1,color='red',shape=4,size=2.5,order=2)))
     } else if (show_offset) {
-      p <- p + guides(fill=guide_legend(order=1),
-                      color=guide_legend(title=NULL, override.aes = list(alpha = 1,color='blue',shape=3,size=2.5,order=2)))
+      p <- p +
+        geom_point(aes(color='Beta_0'),alpha=0) +
+        guides(fill=guide_legend(order=1),
+               color=guide_legend(title=NULL, override.aes = list(alpha = 1,color='blue',shape=3,size=2.5,order=2)))
     } else {
       p <- p + guides(fill=guide_legend(order=1))
     }
@@ -133,19 +138,24 @@ plot_filter_activations_byClass <- function(data,show_beta=F,show_offset=F,fl=NU
             legend.text = element_text(size=14),
             legend.position = 'right',
             axis.text.x = element_text(angle = 45, hjust = 1)) +
-      ylab('P(Z=1)') +
-      geom_point(aes(shape='Beta_1'),alpha=0) +
-      geom_point(aes(color='Beta_0'),alpha=0)
+      ylab('Activation')
     if (show_beta & show_offset) {
-      p <- p + guides(fill=guide_legend(order=1),
-                      shape=guide_legend(title=NULL, override.aes = list(alpha = 1,color='red',shape=4,size=2.5,order=2)),
-                      color=guide_legend(title=NULL, override.aes = list(alpha = 1,color='blue',shape=3,size=2.5,order=3)))
+      p <- p +
+        geom_point(aes(shape='Beta_1'),alpha=0) +
+        geom_point(aes(color='Beta_0'),alpha=0) +
+        guides(fill=guide_legend(order=1),
+               shape=guide_legend(title=NULL, override.aes = list(alpha = 1,color='red',shape=4,size=2.5,order=2)),
+               color=guide_legend(title=NULL, override.aes = list(alpha = 1,color='blue',shape=3,size=2.5,order=3)))
     } else if (show_beta) {
-      p <- p + guides(fill=guide_legend(order=1),
-                      shape=guide_legend(title=NULL, override.aes = list(alpha = 1,color='red',shape=4,size=2.5,order=2)))
+      p <- p +
+        geom_point(aes(shape='Beta_1'),alpha=0) +
+        guides(fill=guide_legend(order=1),
+               shape=guide_legend(title=NULL, override.aes = list(alpha = 1,color='red',shape=4,size=2.5,order=2)))
     } else if (show_offset) {
-      p <- p + guides(fill=guide_legend(order=1),
-                      color=guide_legend(title=NULL, override.aes = list(alpha = 1,color='blue',shape=3,size=2.5,order=2)))
+      p <- p +
+        geom_point(aes(color='Beta_0'),alpha=0) +
+        guides(fill=guide_legend(order=1),
+               color=guide_legend(title=NULL, override.aes = list(alpha = 1,color='blue',shape=3,size=2.5,order=2)))
     } else {
       p <- p + guides(fill=guide_legend(order=1))
     }
@@ -156,7 +166,7 @@ plot_filter_activations_byClass <- function(data,show_beta=F,show_offset=F,fl=NU
 #'
 #' Plot first-layer convolutional filter motifs.
 #'
-#' @param W_conv Either a list of motifs as ICMs, or a single ICM to visualize as sequence logos.
+#' @param W_conv Either a list of motifs as IGMs, or a single IGM to visualize as sequence logos.
 #' @param ylow Minimum Y-axis limit.
 #' @param yhigh Maximum Y-axis limit.
 #' @param method Y-label calculation type for sequence logo plot. Either \code{'custom'} or \code{'bits'}.

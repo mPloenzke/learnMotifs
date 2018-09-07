@@ -18,7 +18,7 @@ Length of the longest motif.
 Loop through all motifs and return the length of the longest motif.
 }
 \seealso{
-\code{\link{pfm_to_icm}}
+\code{\link{pfm_to_igm}}
 }
 \author{
 Matthew Ploenzke, \email{ploenzke@g.harvard.edu}

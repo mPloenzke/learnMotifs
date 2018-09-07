@@ -4,10 +4,15 @@
 \alias{format_filter_motifs}
 \title{Format filters for motif plotting.}
 \usage{
-format_filter_motifs(conv_filters)
+format_filter_motifs(conv_filters, type = "IGM", bg = c(0.25, 0.25,
+  0.25, 0.25))
 }
 \arguments{
 \item{conv_filters}{4-dimensional array containing filter weights.}
+
+\item{type}{String declaring motif representation type (either `IGM` or `PWM`).}
+
+\item{bg}{Vector of background nucleotide probabilities (A, C, G, T)}
 }
 \value{
 List with named motifs.

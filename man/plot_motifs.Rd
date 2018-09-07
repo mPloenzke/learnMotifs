@@ -8,7 +8,7 @@ plot_motifs(W_conv, ylow = 0, yhigh = 2, method = "custom",
   plotheight = NULL, fl)
 }
 \arguments{
-\item{W_conv}{Either a list of motifs as ICMs, or a single ICM to visualize as sequence logos.}
+\item{W_conv}{Either a list of motifs as IGMs, or a single IGM to visualize as sequence logos.}
 
 \item{ylow}{Minimum Y-axis limit.}
 

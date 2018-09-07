@@ -1,12 +1,12 @@
-#' Model callback function wrapper.
+#' Model callback function wrapper for learning IGMs along with using fixed motifs..
 #'
-#' Callback for the model to output plots after a user-specified number of epochs. Model must have two input layers.
+#' Callback for the model to output plots after a user-specified number of epochs. Model must have two input layers and utilize IGMs as filters.
 #'
 #' @author Matthew Ploenzke, \email{ploenzke@@g.harvard.edu}
 #' @keywords callback model
 #'
 #' @export
-combo_Motifs <- R6::R6Class("combo_Motifs",
+combo_IGM_Motifs <- R6::R6Class("combo_IGM_Motifs",
   inherit = KerasCallback,
   public = list(
     model = NULL,
@@ -23,10 +23,12 @@ combo_Motifs <- R6::R6Class("combo_Motifs",
     num_deNovo = NULL,
     motif.names = NULL,
     filter_len = NULL,
+    bg = NULL,
+    pseudocount = NULL,
     initialize = function(model = NA, N = NA, log_dir,
                           plot_activations, plot_filters, plot_crosscorrel_motifs,
                           deNovo_data, jaspar_data, test_labels, test_seqs,
-                          num_deNovo, motif.names, filter_len) {
+                          num_deNovo, motif.names, filter_len, bg=c(.25,.25,.25,.25), pseudocount=.05) {
       self$model <- model
       self$N <- N
       self$log_dir <- log_dir
@@ -39,6 +41,8 @@ combo_Motifs <- R6::R6Class("combo_Motifs",
       self$test_labels <- test_labels
       self$test_seqs <- test_seqs
       self$num_deNovo <- num_deNovo
+      self$bg <- bg
+      self$pseudocount <- pseudocount
       idm <- table(motif.names)[table(motif.names)>1]
       for (mm in names(idm)) {
         idx <- which(motif.names==mm)
@@ -53,7 +57,7 @@ combo_Motifs <- R6::R6Class("combo_Motifs",
     },
     on_epoch_end = function(epoch, logs = list()) {
       new_wts <- self$model$get_weights()
-      new_wts[1:2] <- restrict_to_ICM(new_wts[[1]],new_wts[[2]])
+      new_wts[1:2] <- restrict_to_IGM(new_wts[[1]],new_wts[[2]],bg=self$bg,pseudocount=self$pseudocount)
       self$model$set_weights(new_wts)
       if (self$epoch %% self$N == 0) {
         epoch_dir <- make_epoch_dir(self$log_dir,self$epoch,self$model$get_weights())
@@ -69,8 +73,8 @@ combo_Motifs <- R6::R6Class("combo_Motifs",
           b_conv1 <- self$model$get_weights()[[2]]
           jaspar_conv <- self$model$get_weights()[[3]]
           jaspar_b_conv1 <- self$model$get_weights()[[4]]
-          deNovo_conv_list <- format_filter_motifs(deNovo_conv)
-          jaspar_conv_list <- format_filter_motifs(jaspar_conv)
+          deNovo_conv_list <- format_filter_motifs(deNovo_conv,type='IGM',bg=self$bg)
+          jaspar_conv_list <- format_filter_motifs(jaspar_conv,type='IGM',bg=self$bg)
           plot_motifs(deNovo_conv_list,ylow=0,yhigh=2,method='custom',plotheight=NULL,fl=file.path(epoch_dir,"deNovo_filter.pdf"))
           plot_motifs(jaspar_conv_list,ylow=0,yhigh=2,method='custom',plotheight=NULL,fl=file.path(epoch_dir,"jaspar_filters.pdf"))
         }
@@ -83,7 +87,7 @@ combo_Motifs <- R6::R6Class("combo_Motifs",
       self$epoch <- self$epoch + 1
     }
 ))
-#' Model callback function wrapper.
+#' Model callback function wrapper for learning IGMs.
 #'
 #' Callback for the model to output plots after a user-specified number of epochs. Model must only have a single input layer.
 #'
@@ -91,7 +95,7 @@ combo_Motifs <- R6::R6Class("combo_Motifs",
 #' @keywords callback model
 #'
 #' @export
-deNovo_Motifs <- R6::R6Class("deNovo_Motifs",
+deNovo_IGM_Motifs <- R6::R6Class("deNovo_IGM_Motifs",
                             inherit = KerasCallback,
                             public = list(
                               model = NULL,
@@ -106,10 +110,12 @@ deNovo_Motifs <- R6::R6Class("deNovo_Motifs",
                               test_seqs = NULL,
                               num_deNovo = NULL,
                               filter_len = NULL,
+                              bg = NULL,
+                              pseudocount = NULL,
                               initialize = function(model = NA, N = NA, log_dir,
                                                     plot_activations, plot_filters, plot_crosscorrel_motifs,
                                                     deNovo_data, test_labels, test_seqs,
-                                                    num_deNovo,filter_len) {
+                                                    num_deNovo,filter_len, bg=c(.25,.25,.25,.25), pseudocount=.05) {
                                 self$model <- model
                                 self$N <- N
                                 self$log_dir <- log_dir
@@ -122,10 +128,12 @@ deNovo_Motifs <- R6::R6Class("deNovo_Motifs",
                                 self$test_seqs <- test_seqs
                                 self$num_deNovo <- num_deNovo
                                 self$filter_len <- filter_len
+                                self$bg <- bg
+                                self$pseudocount <- pseudocount
                               },
                               on_epoch_end = function(epoch, logs = list()) {
                                 new_wts <- self$model$get_weights()
-                                new_wts[1:2] <- restrict_to_ICM(new_wts[[1]],new_wts[[2]])
+                                new_wts[1:2] <- restrict_to_IGM(new_wts[[1]],new_wts[[2]],bg=self$bg,pseudocount=self$pseudocount)
                                 self$model$set_weights(new_wts)
                                 if (self$epoch %% self$N == 0) {
                                   epoch_dir <- make_epoch_dir(self$log_dir,self$epoch,self$model$get_weights())
@@ -137,7 +145,7 @@ deNovo_Motifs <- R6::R6Class("deNovo_Motifs",
                                   if (self$plot_filters) {
                                     deNovo_conv <- self$model$get_weights()[[1]]
                                     b_conv1 <- self$model$get_weights()[[2]]
-                                    deNovo_conv_list <- format_filter_motifs(deNovo_conv)
+                                    deNovo_conv_list <- format_filter_motifs(deNovo_conv,type='IGM',bg=self$bg)
                                     plot_motifs(deNovo_conv_list,ylow=0,yhigh=2,method='custom',plotheight=NULL,fl=file.path(epoch_dir,"deNovo_filter.pdf"))
                                   }
                                   if (self$plot_crosscorrel_motifs) {

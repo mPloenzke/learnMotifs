@@ -17,7 +17,9 @@ layer_topN_max_pooling(object, n_max, name = NULL)
 Top max-pooled hits layer.
 }
 \description{
-Calculate the top N motif hits max-pooled over the entire sequence.
+Calculate the top N motif hits max-pooled over the entire sequence. This function uses the \code{keras} \code{k_max} function which internally
+converts the input to its pre-activation scale. Therefore we recommend using the \code{linear} activation for the layer feeding into
+this one and then using the \code{layer_activation} function after the operation.
 }
 \seealso{
 \code{\link{topN_max_pooling}}

@@ -4,7 +4,8 @@
 \alias{pfm_to_pwm}
 \title{Convert PFM to PWM.}
 \usage{
-pfm_to_pwm(motif.raw, motif.pos = NULL, mmax, pseudoprob = 0.001)
+pfm_to_pwm(motif.raw, motif.pos = NULL, mmax, bg = c(0.25, 0.25, 0.25,
+  0.25), pseudoprob = 0.001)
 }
 \arguments{
 \item{motif.raw}{List of annotated motifs as PFMs.}
@@ -13,7 +14,9 @@ pfm_to_pwm(motif.raw, motif.pos = NULL, mmax, pseudoprob = 0.001)
 
 \item{mmax}{Maximum motif length, found via \code{\link{find_max_length}}.}
 
-\item{pseudoprob}{Pseudo-probability to add to PPM entries.}
+\item{bg}{Vector of background nucleotide probabilities (A, C, G, T)}
+
+\item{pseudoprob}{Value to add to zero-valued position probability matrix entries prior to converting to PWM.}
 }
 \value{
 4-D array containing PWMs of the extracted motifs.

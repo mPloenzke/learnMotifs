@@ -2,7 +2,7 @@
 % Please edit documentation in R/layer_denovoMotif.R
 \name{layer_deNovo}
 \alias{layer_deNovo}
-\title{Custom 2-D convolution wrapper with to learn ICMs.}
+\title{Custom 2-D convolution wrapper with to learn IGMs or PWMs.}
 \usage{
 layer_deNovo(object, filters, filter_len, lambda_pos = 0,
   lambda_filter = 0, lambda_l1 = 0, lambda_offset = 0,
@@ -37,13 +37,13 @@ layer_deNovo(object, filters, filter_len, lambda_pos = 0,
 
 \item{use_bias}{Boolean, whether the layer uses a bias vector. Default is to include a bias.}
 
-\item{kernel_initializer}{Initializer for the \code{kernel} weights matrix. Default is random uniform on \code{(0,0.5)}.}
+\item{kernel_initializer}{Initializer for the \code{kernel} weights matrix. Default is random uniform on \code{(0,0.5)} (i.e. \code{initializer_random_uniform(0,.5)}).}
 
 \item{bias_initializer}{Initializer for the bias vector. Default is \code{'zeros'}.}
 
 \item{kernel_regularizer}{Regularizer function applied to the \code{kernel} weights matrix. Options include \code{NULL}, \code{total_regularizer} (default), \code{position_regularizer}, or \code{filter_regularizer}.}
 
-\item{kernel_constraint}{Constraint function applied to the kernel matrix. Options include \code{NULL}, \code{info_constraint} (default), \code{negative_constraint}, or \code{nonnegative_constraint}.}
+\item{kernel_constraint}{Constraint function applied to the kernel matrix. Options include \code{NULL}, \code{info_constraint} (default), \code{pwm_constraint}, \code{negative_constraint}, or \code{nonnegative_constraint}.}
 
 \item{bias_constraint}{Constraint function applied to the bias vector.Options include \code{NULL}, \code{negative_constraint} (default), or \code{nonnegative_constraint}.}
 
@@ -57,7 +57,7 @@ layer_deNovo(object, filters, filter_len, lambda_pos = 0,
 A Keras model with the added layer.
 }
 \description{
-Custom 2-D convolution wrapper with regularization and constraints to learn de novo motifs in the form of ICMs.
+Custom 2-D convolution wrapper with regularization and constraints to learn de novo motifs in the form of IGMs or PWMs.
 }
 \author{
 Matthew Ploenzke, \email{ploenzke@g.harvard.edu}
