@@ -182,7 +182,13 @@ plot_filter_activations_byClass <- function(data,show_beta=F,show_offset=F,fl=NU
 #' @importFrom ggseqlogo geom_logo theme_logo
 #' @export
 plot_motifs <- function(W_conv,ylow=0,yhigh=2,method='custom',plotheight=NULL,fl) {
-  if (is.null(plotheight)) {plotheight <- ifelse(opt$n_filters>8,15,7.5)}
+  if (is.null(plotheight)) {
+    if (is.list(W_conv)) {
+      plotheight <- ifelse(length(W_conv)>8,15,7.5)
+    } else {
+      plotheight <- 4
+    }
+  }
   if (is.list(W_conv)) {
     p <- ggplot()+
       geom_logo(lapply(W_conv,function(i) {if (all(i==0)) {i+1e-10} else {i}}),method=method,seq_type='dna') +

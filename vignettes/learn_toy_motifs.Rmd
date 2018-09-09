@@ -20,10 +20,9 @@ library(ggplot2)
 
 Set model options. Note we do not cache or set a seed so results will differ each run.
 ```{r}
-rm(list=ls(all=TRUE))
 opt <- list()
 opt$max_len <- 200 # sequence length
-opt$log_dir <- 'log' #logging directory
+opt$log_dir <- 'log' # logging directory
 opt$embedding_pos <- 'GGGGGGGG' # sub-sequence inserted into Y=1 sequences
 opt$embedding_neg <- 'CCCCCCCC' # sub-sequence inserted into Y=0 sequences
 opt$batch_size <- 64 # batch size for training 
@@ -42,7 +41,7 @@ opt$plot_filterMotifs <- TRUE # plot sequence logos (IGMs) directly
 opt$plot_empiricalMotifs <- FALSE # plot sequence logos from maximally-activated sub-sequences
 opt$output_plots_every <- 5 # plotting frequency (every X epochs)
 opt$downsample <- 1 # downsample training cases (provide a proportion)
-opt$shuffle <- .1 # proportion of cases to shuffle
+opt$shuffle <- .1 # proportion of cases to shuffle (i.e. how many cases contain the wrong label)
 opt$cache_Old <- TRUE # cache old results
 ```
 

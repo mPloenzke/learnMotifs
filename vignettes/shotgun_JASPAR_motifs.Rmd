@@ -1,0 +1,180 @@
+---
+title: "JASPAR motifs"
+author: "Matt Ploenzke"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Put the title of your vignette here}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+  
+The package relies upon [keras](https://keras.rstudio.com/) to perform much of the heavy lifting. Start by making sure the `keras` package is installed and may be loaded. 
+```{r setup, include=FALSE}
+rm(list=ls(all=TRUE))
+knitr::opts_chunk$set(echo = TRUE)
+library(keras)
+library(learnMotifs)
+library(tidyverse)
+```
+
+Set model options. Note we do not cache or set a seed so results will differ each run.
+```{r}
+opt <- list()
+opt$max_len <- 200 # sequence length
+opt$log_dir <- 'log_JASPAR' # logging directory
+opt$batch_size <- 64 # batch size for training 
+opt$epochs <- 10 # training epochs
+opt$lambda_beta <- .05 # regularization penalty for the betas (effect sizes)
+opt$extranneous_jaspar_motifs <- 'ALL' # number of extra JASPAR-annotated motifs to initialize as conv. filters beyond MYC, IRF, CTCF
+opt$learning_rate <- 0.05 # stochastic gradient descent learning rate
+opt$decay_rate <- opt$learning_rate / opt$epochs / 2 # decay for learning rate
+opt$plot_Activations <- TRUE # boxplot of activation differences by class per filter
+opt$plot_filterMotifs <- TRUE # plot sequence logos (IGMs) directly
+opt$plot_empiricalMotifs <- FALSE # plot sequence logos from maximally-activated sub-sequences
+opt$JASPAR_pfms <- file.path(opt$log_dir,'JASPAR_known_motifs.txt') # location and file name to download and save annotated motifs to
+opt$output_plots_every <- 5 # plotting frequency (every X epochs)
+opt$downsample <- 1 # downsample training cases (provide a proportion)
+opt$shuffle <- .1 # proportion of cases to shuffle between class (i.e. how many cases contain the wrong label)
+opt$cache_Old <- FALSE # cache old results
+```
+
+Load random nucleotide sequences files. The negative cases (Y=0) will simply be randomly generated nucleotide sequences from background while the positive cases (Y=1) contain up to three embeddings of three distinct motifs (MYC, CTCF, IRF). Cases may contain multiple motifs and were simulated with the [simdna](https://github.com/kundajelab/simdna) package. In this vignette we will initialize (and fix) the convolutional filters using the annotated JASPAR motifs as information gain matrices (IGMs).
+```{r}
+negative.cases <- EmptyBackground
+positive.cases <- MYC_CTCF_IRF
+```
+
+Join and randomly shuffle to increase difficulty.
+```{r}
+positive.cases$y <- rbinom(nrow(positive.cases),1,prob=(1-opt$shuffle))
+negative.cases$y <- rbinom(nrow(negative.cases),1,prob=opt$shuffle)
+all.cases <- rbind(positive.cases,negative.cases)
+all.cases <- all.cases[sample(1:nrow(all.cases),size=nrow(all.cases),replace=FALSE),]
+```
+
+Optionally downsample.
+```{r}
+if (opt$downsample<1) {all.cases <- all.cases[sample(1:nrow(all.cases),size=opt$downsample*nrow(all.cases)),]}
+```
+
+Split into training and validation.
+```{r}
+idx <- sample(1:nrow(all.cases),round(.9*nrow(all.cases)))
+training_data <- all.cases[idx,c('sequence')]
+training_labels <- all.cases[idx,'y']
+validation_data <- all.cases[-idx,c('sequence')]
+validation_labels <- all.cases[-idx,'y']
+```
+
+Set up logging directory.
+```{r}
+setup_log_dir(opt)
+```
+
+Import previously-annotated motifs. We'll use JASPAR and then format them to be used as convolutional filters by converting them to IGMs. One may opt to use PWMs instead.
+```{r}
+inserted.motifs <- c('MYC','CTCF','IRF')
+download.file('http://jaspar.genereg.net/download/CORE/JASPAR2018_CORE_vertebrates_non-redundant_pfms_jaspar.txt',opt$JASPAR_pfms)
+jaspar.raw <- my_readJASPARMatrix(opt$JASPAR_pfms,type='all')
+jaspar.names <- names(jaspar.raw)
+if (opt$extranneous_jaspar_motifs=='ALL') {
+  jaspar.pos <- 1:length(jaspar.raw)
+} else {
+  jaspar.pos <- sapply(inserted.motifs,function(j) {which(jaspar.names==j)})
+  jaspar.pos <- c(jaspar.pos,sample((1:length(jaspar.raw))[!(1:length(jaspar.raw) %in% jaspar.pos)],opt$extranneous_jaspar_motifs,replace=FALSE))
+}
+jaspar.pos <- jaspar.pos[!is.na(jaspar.pos)]
+jaspar.names <- jaspar.names[jaspar.pos]
+jaspar.maxlen <- find_max_length(jaspar.raw,jaspar.pos)
+jaspar.motifs <- pfm_to_igm(jaspar.raw,jaspar.pos,jaspar.maxlen)
+```
+
+One-hot encode for the model.
+```{r}
+training_array_jaspar <- one_hot(training_data,jaspar.maxlen)
+validation_array_jaspar <- one_hot(validation_data,jaspar.maxlen)
+```
+
+Calculate the expected activations to use as offsets. Since we implement the sigmoidal activation function in the model we calculate the average activations per motif (i.e. convolutional filter) on a small batch of data and use these values as the associated offsets to ensure the post-sigmoidal activations are centered around 0.5, the steepest-sloped location of the sigmoid curve.
+```{r}
+jaspar.offsets <- calculate_offsets(jaspar.motifs, jaspar.pos, jaspar.maxlen, training_array_jaspar, batchsize=256)
+```
+
+Build the JASPAR model to calculate the motif effect. We expect to find the largest effect sizes for the three inserted motifs. 
+```{r}
+jaspar_sequence <- layer_input(shape=c(4,opt$max_len + 2*jaspar.maxlen-2,1),name='jaspar_input')
+jaspar_output <- jaspar_sequence %>%
+  layer_fixedMotif(filter=length(jaspar.pos),
+                   motif_maxlen=jaspar.maxlen,
+                   fixed.motifs=jaspar.motifs,
+                   fixed.offsets=jaspar.offsets,
+                   input_shape = c(4, opt$max_len+2*jaspar.maxlen-2, 1),
+                   name = 'jaspar_conv')  %>%
+  layer_max_pooling_2d(pool_size = c(1,(opt$max_len+jaspar.maxlen-1)),name='jaspar_pool') %>%
+  layer_flatten(name='jaspar_flatten') %>%
+  layer_dense(units=1,activation='sigmoid',kernel_constraint = nonnegative_constraint,kernel_regularizer = regularizer_l1(l=opt$lambda_beta)) 
+model <- keras_model(
+      inputs = c(jaspar_sequence), 
+      outputs = c(jaspar_output))
+model %>% compile(
+  loss = "binary_crossentropy",
+  optimizer = optimizer_sgd(lr=opt$learning_rate,decay=opt$decay_rate),
+  metrics = c("accuracy")
+)
+model_fit <- model %>% fit(
+  x=training_array_jaspar, training_labels,
+  batch_size = opt$batch_size,
+  epochs = opt$epochs,
+  validation_data = list(validation_array_jaspar, validation_labels),
+  shuffle = TRUE
+)
+```
+
+Save training plot.
+```{r}
+p <- plot(model_fit,method='ggplot2',smooth=TRUE)
+ggsave(paste(opt$log_dir,"Training_loss_Jaspar_Preliminary.pdf",sep="/"),plot=p,width=15,height=7.5,units='in')
+```
+
+Create a tibble with the motif name and the estimated effect size. 
+```{r}
+betas <- tibble(Effect=c(model$get_weights()[[3]]),Filter=jaspar.names)
+
+```
+
+Many of the motifs have an associated effect size of zero. These are irrelevant and may be removed from the model without impacting performance. This is due to the sparsity imposed on the betas.
+```{r}
+print(paste(sum(betas$Effect==0), 'of the', nrow(betas),'motifs may be discarded at the defined threshold and regularization penalty.',sep=' '))
+```
+
+Let's look at which three motifs have the largest effect sizes. Ideally these should include the inserted motifs (MYC, CTCF, IRF). Note that the motif named IRF is equivalent to the motif named IRF2 and the difference in naming is simply due to the source. In other words, there is no motif named IRF in the JASPAR annotations.
+```{r}
+betas %>%
+  arrange(desc(Effect)) %>%
+  head(3)
+```
+
+Output the sequence logo plots for any motifs with an estimated effect size greater than 0.05. Note the high similarity between the retained motifs.
+```{r}
+relevant_filters <- model$get_weights()[[1]][,,,which(abs(betas$Effect)>.05),drop=FALSE]
+filter_list <- format_filter_motifs(relevant_filters)
+names(filter_list) <- pull(betas[which(abs(betas$Effect)>.05),'Filter'])
+plot_motifs(filter_list,ylow=0,yhigh=2,method='custom',fl=file.path(opt$log_dir,"relevant_filters.pdf"))
+```
+
+Plot and write them to csv them for inspection along with the mean activation difference between classes for visualization.
+```{r}
+betas$Information <- apply(jaspar.motifs,4,sum)
+input_tensor <- model$input
+activations_fn <- k_function(inputs = list(input_tensor),
+                             outputs = list(model$get_layer(name='jaspar_flatten')$output))
+activations <- activations_fn(list(validation_array_jaspar))[[1]]
+colnames(activations) <- jaspar.names
+activations <- as.tibble(activations)
+activations$Y <- validation_labels
+activations <- activations %>% gather(Filter,Activation,-Y) %>% left_join(betas,by='Filter')
+betas <- calcActivationDifference(activations)
+plot_a1 <- plot_activation_difference(betas)
+ggsave(paste(opt$log_dir,"Betas_Jaspar_Preliminary.pdf",sep="/"),plot=plot_a1,width=15,height=7.5,units='in')
+```
