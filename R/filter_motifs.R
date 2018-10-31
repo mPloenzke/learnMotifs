@@ -48,6 +48,7 @@ format_filter_motifs <- function(conv_filters, type='IGM', bg=c(.25,.25,.25,.25)
 #' @keywords motif filter format
 #'
 #' @importFrom stats quantile
+#' @importFrom stringi stri_dup
 #' @export
 format_activation_motifs <- function(activations, test_seqs, filter_len, method, threshold) {
   all_dna_strings <- list()
