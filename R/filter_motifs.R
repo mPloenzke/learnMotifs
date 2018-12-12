@@ -15,8 +15,8 @@
 format_filter_motifs <- function(conv_filters, type='IGM', bg=c(.25,.25,.25,.25)) {
   W_conv_list <- list()
   if (type=='PWM') {
-    bg.array <- array(matrix(bg,nrow=4,ncol=ncol(i),byrow=F),dim=dim(i))
     for (filt in 1:dim(conv_filters)[4]) {
+      bg.array <- array(matrix(bg,nrow=4,ncol=ncol(i),byrow=F),dim=dim(i))
       i <- conv_filters[,,,filt,drop=FALSE]
       ppm <- (2^i)*bg.array
       ppm <- ppm/array(matrix(colSums(ppm),nrow=4,ncol=ncol(i),byrow=T),dim=dim(i))

@@ -133,7 +133,7 @@ deNovo_PWM_Motifs <- R6::R6Class("deNovo_PWM_Motifs",
                               },
                               on_epoch_end = function(epoch, logs = list()) {
                                 new_wts <- self$model$get_weights()
-                                new_wts[1] <- restrict_to_PWM(new_wts[[1]],bg=self$bg,pseudoprob=self$pseudoprob)
+                                new_wts[[1]] <- restrict_to_PWM(new_wts[[1]],bg=self$bg,pseudoprob=self$pseudoprob)
                                 self$model$set_weights(new_wts)
                                 if (self$epoch %% self$N == 0) {
                                   epoch_dir <- make_epoch_dir(self$log_dir,self$epoch,self$model$get_weights())
